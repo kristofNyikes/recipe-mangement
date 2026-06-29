@@ -54,20 +54,20 @@ const Navbar = () => {
         <Link href={"/"} className="btn btn-ghost text-xl">
           Recipe Management
         </Link>
-      </div>
-      <div className="hidden lg:navbar-center lg:flex">
-        <ul className="menu menu-horizontal px-1">
-          <li className="mx-2.5">
-            <Link href={"/about"} className="btn">
-              About
-            </Link>
-          </li>
-          <li className="mx-2.5">
-            <Link href={"/contact"} className="btn">
-              Contact
-            </Link>
-          </li>
-        </ul>
+        <div className="hidden lg:flex">
+          <ul className="menu menu-horizontal px-1">
+            <li className="mx-2.5">
+              <Link href={"/about"} className="btn">
+                About
+              </Link>
+            </li>
+            <li className="mx-2.5">
+              <Link href={"/contact"} className="btn">
+                Contact
+              </Link>
+            </li>
+          </ul>
+        </div>
       </div>
       <div className="hidden lg:flex lg:navbar-end">
         <ul className="menu menu-horizontal px-1">
