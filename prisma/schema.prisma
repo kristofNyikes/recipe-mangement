@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * after MVP TODO:
+ * -User model
+ * -tags (probably enums? or could it be added manually by users? probably bad idea but could be funny)
+ * -favorites
+ * -images
+ * -ratings
+ * -comments
+ * -categories
+ * -collections
+ * -pantry
+ * -shopping lists (automatically based on pantry)
+ */
+
+model Recipe {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  prepTime    Int          @default(0)
+  cookTime    Int          @default(0)
+  servings    Int          @default(1)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  ingredients Ingredient[]
+  steps       Step[]
+}
+
+model Ingredient {
+  id         Int      @id @default(autoincrement())
+  recipeId   Int
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  name       String
+  amount     Decimal?
+  unit       Unit?
+  note       String?
+  stepNumber Int
+
+  @@index([recipeId])
+}
+
+model Step {
+  id         Int    @id @default(autoincrement())
+  recipeId   Int
+  recipe     Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  stepNumber Int
+  text       String
+
+  @@index([recipeId])
+}
+
+enum Unit {
+  G
+  DKG
+  KG
+
+  ML
+  CL
+  L
+
+  TSP
+  TBSP
+
+  CUP
+
+  PINCH
+
+  PIECE
+}
