@@ -13,13 +13,12 @@ const Navbar = () => {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              {" "}
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
                 d="M4 6h16M4 12h8m-8 6h16"
-              />{" "}
+              />
             </svg>
           </div>
           <ul
@@ -51,44 +50,43 @@ const Navbar = () => {
             </li>
           </ul>
         </div>
-        <Link href={"/"} className="btn btn-ghost text-xl">
+        <Link
+          href={"/main"}
+          className="btn btn-ghost text-xl whitespace-nowrap"
+        >
           Recipe Management
         </Link>
-        <div className="hidden lg:flex">
-          <ul className="menu menu-horizontal px-1">
-            <li className="mx-2.5">
-              <Link href={"/about"} className="btn">
-                About
-              </Link>
-            </li>
-            <li className="mx-2.5">
-              <Link href={"/contact"} className="btn">
-                Contact
-              </Link>
-            </li>
-          </ul>
-        </div>
       </div>
-      <div className="hidden lg:flex lg:navbar-end">
-        <ul className="menu menu-horizontal px-1">
+
+      <div className="navbar-center hidden lg:flex">
+        <ul className="menu menu-horizontal px-1 gap-1">
           <li>
-            <Link
-              href={"/auth/login"}
-              className="btn btn-soft btn-primary mx-2.5"
-            >
-              Login
+            <Link href={"/about"} className="btn btn-ghost">
+              About
             </Link>
           </li>
           <li>
-            <Link href={"/auth/signup"} className="btn btn-primary mx-2.5">
+            <Link href={"/contact"} className="btn btn-ghost">
+              Contact
+            </Link>
+          </li>
+        </ul>
+      </div>
+
+      <div className="navbar-end hidden lg:flex">
+        <ul className="menu menu-horizontal px-1 gap-1">
+          <li>
+            <Link href={"/auth/login"} className="btn btn-soft btn-primary">
+              Log in
+            </Link>
+          </li>
+          <li>
+            <Link href={"/auth/signup"} className="btn btn-primary">
               Sign up
             </Link>
           </li>
         </ul>
       </div>
-      {/* <div className="navbar-end">
-        <a className="btn">Button</a>
-      </div> */}
     </nav>
   );
 };
