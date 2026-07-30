@@ -24,6 +24,7 @@ datasource db {
 model Recipe {
   id          Int          @id @default(autoincrement())
   title       String
+  slug        String       @unique
   description String?
   prepTime    Int          @default(0)
   cookTime    Int          @default(0)
@@ -42,7 +43,7 @@ model Ingredient {
   amount     Decimal?
   unit       Unit?
   note       String?
-  stepNumber Int
+  stepNumber Int?
 
   @@index([recipeId])
 }
