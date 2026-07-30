@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/prisma/client";
+import { RecipeSchema } from "../schema";
+import z from "zod";
+import slugify from "slugify";
+import { nanoid } from "nanoid";
 
-interface params {
+interface Params {
   params: Promise<{ slug: string }>;
 }
 
-export const GET = async (req: NextRequest, { params }: params) => {
+export const GET = async (req: NextRequest, { params }: Params) => {
   try {
     const { slug } = await params;
 
@@ -23,9 +27,97 @@ export const GET = async (req: NextRequest, { params }: params) => {
 
     return NextResponse.json({ data: recipe }, { status: 200 });
   } catch (error) {
-    console.error("Error fetchin recipe: ", error);
+    console.error("Error fetching recipe: ", error);
     return NextResponse.json(
       { error: " Failed to fetch recipe" },
+      { status: 500 },
+    );
+  }
+};
+
+export const PUT = async (req: NextRequest, { params }: Params) => {
+  try {
+    const { slug } = await params;
+    const body = await req.json();
+
+    const result = RecipeSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: z.treeifyError(result.error) },
+        { status: 400 },
+      );
+    }
+
+    const existingRecipe = await prisma.recipe.findUnique({
+      where: { slug: slug },
+      select: { title: true },
+    });
+
+    if (!existingRecipe) {
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    }
+
+    const {
+      title,
+      description,
+      prepTime,
+      cookTime,
+      servings,
+      ingredients,
+      steps,
+    } = result.data;
+
+    const updatedSlug =
+      existingRecipe.title !== title
+        ? `${slugify(title, { lower: true, strict: true })}-${nanoid(6)}`
+        : slug;
+
+    const updatedRecipe = await prisma.$transaction(async (tx) => {
+      const recipe = await tx.recipe.update({
+        where: {
+          slug: slug,
+        },
+        data: {
+          title,
+          slug: updatedSlug,
+          description,
+          prepTime,
+          cookTime,
+          servings,
+
+          ingredients: {
+            deleteMany: {},
+            create: ingredients.map((ingredient) => ({
+              name: ingredient.name,
+              amount: ingredient.amount,
+              unit: ingredient.unit,
+              note: ingredient.note,
+              stepNumber: ingredient.stepNumber,
+            })),
+          },
+          steps: {
+            deleteMany: {},
+            create: steps.map((step) => ({
+              stepNumber: step.stepNumber,
+              text: step.text,
+            })),
+          },
+        },
+
+        include: {
+          ingredients: true,
+          steps: true,
+        },
+      });
+      return recipe;
+    });
+
+    return NextResponse.json({ data: updatedRecipe }, { status: 200 });
+  } catch (error) {
+    console.error("Failed to update recipe: ", error);
+    return NextResponse.json(
+      { error: "Failed to update recipe" },
       { status: 500 },
     );
   }
