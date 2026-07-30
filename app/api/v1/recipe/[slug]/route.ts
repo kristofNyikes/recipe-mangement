@@ -4,6 +4,7 @@ import { RecipeSchema } from "../schema";
 import z from "zod";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
+import { Prisma } from "@/generated/prisma";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -118,6 +119,31 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
     console.error("Failed to update recipe: ", error);
     return NextResponse.json(
       { error: "Failed to update recipe" },
+      { status: 500 },
+    );
+  }
+};
+
+export const DELETE = async (_: NextRequest, { params }: Params) => {
+  const { slug } = await params;
+
+  try {
+    await prisma.recipe.delete({
+      where: { slug: slug },
+    });
+
+    return NextResponse.json({ message: "Recipe deleted" }, { status: 200 });
+  } catch (error) {
+    console.error("Failed to delete recipe: ", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(
+      { error: "Failed to delete recipe" },
       { status: 500 },
     );
   }
