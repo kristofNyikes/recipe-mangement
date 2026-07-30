@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Unit } from "@/generated/prisma";
 
-export const CreateRecipeSchema = z.object({
+export const RecipeSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
   description: z.string().optional(),
 

@@ -2,7 +2,7 @@ import prisma from "@/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
-import { CreateRecipeSchema } from "./schema";
+import { RecipeSchema } from "./schema";
 import z from "zod";
 
 // GET /api/v1/recipe - Gets all recipes
@@ -28,7 +28,7 @@ export const GET = async (req: NextRequest) => {
 export const POST = async (req: NextRequest) => {
   const body = await req.json();
 
-  const result = CreateRecipeSchema.safeParse(body);
+  const result = RecipeSchema.safeParse(body);
 
   if (!result.success) {
     return NextResponse.json(
