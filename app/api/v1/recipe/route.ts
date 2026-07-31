@@ -1,9 +1,8 @@
 import prisma from "@/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import slugify from "slugify";
-import { nanoid } from "nanoid";
 import { RecipeSchema } from "./schema";
 import z from "zod";
+import generateSLug from "@/app/helpers/slugify";
 
 // GET /api/v1/recipe - Gets all recipes
 export const GET = async (req: NextRequest) => {
@@ -49,7 +48,7 @@ export const POST = async (req: NextRequest) => {
     steps,
   } = result.data;
 
-  const slug = `${slugify(title, { lower: true, strict: true })}-${nanoid(6)}`;
+  const slug = generateSLug(title);
 
   try {
     const recipe = await prisma.recipe.create({
