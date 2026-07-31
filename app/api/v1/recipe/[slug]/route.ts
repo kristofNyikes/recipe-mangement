@@ -5,6 +5,7 @@ import z from "zod";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 import { Prisma } from "@/generated/prisma";
+import generateSLug from "@/app/helpers/slugify";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -69,10 +70,7 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
       steps,
     } = result.data;
 
-    const updatedSlug =
-      existingRecipe.title !== title
-        ? `${slugify(title, { lower: true, strict: true })}-${nanoid(6)}`
-        : slug;
+    const updatedSlug = generateSLug(title);
 
     const updatedRecipe = await prisma.$transaction(async (tx) => {
       const recipe = await tx.recipe.update({
