@@ -50,10 +50,7 @@ const Navbar = () => {
             </li>
           </ul>
         </div>
-        <Link
-          href={"/main"}
-          className="btn btn-ghost text-xl whitespace-nowrap"
-        >
+        <Link href={"/"} className="btn btn-ghost text-xl whitespace-nowrap">
           Recipe Management
         </Link>
       </div>
