@@ -1,15 +1,18 @@
-export type Unit =
-  | "G"
-  | "DKG"
-  | "KG"
-  | "ML"
-  | "CL"
-  | "L"
-  | "TSP"
-  | "TBSP"
-  | "CUP"
-  | "PINCH"
-  | "PIECE";
+export const units = [
+  "G",
+  "DKG",
+  "KG",
+  "ML",
+  "CL",
+  "L",
+  "TSP",
+  "TBSP",
+  "CUP",
+  "PINCH",
+  "PIECE",
+] as const;
+
+export type Unit = (typeof units)[number];
 
 export interface Ingredient {
   name: string;
@@ -27,6 +30,16 @@ export interface Step {
 export interface RecipeSeed {
   title: string;
   description?: string;
+  prepTime: number;
+  cookTime: number;
+  servings: number;
+  ingredients: Ingredient[];
+  steps: Step[];
+}
+
+export interface Recipe {
+  title: string;
+  description: string;
   prepTime: number;
   cookTime: number;
   servings: number;
