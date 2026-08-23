@@ -4,7 +4,7 @@ import { FetchedRecipe } from "@/app/types";
 
 const RecentRecipes = async () => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/recipe`,
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/recipe?page=1&limit=3&sort=desc&summary=true`,
   );
 
   if (!response.ok) {
@@ -13,7 +13,7 @@ const RecentRecipes = async () => {
 
   const { data } = await response.json();
 
-  const recipes: FetchedRecipe[] = data.slice(0, 3);
+  const recipes: FetchedRecipe[] = data;
 
   return (
     <div className="card bg-base-200 shadow-sm">
