@@ -46,3 +46,23 @@ export interface Recipe {
   ingredients: Ingredient[];
   steps: Step[];
 }
+
+export interface RecipeCardProps {
+  title: string;
+  slug: string;
+  description?: string;
+  prepTime: number;
+  cookTime: number;
+  servings: number;
+}
+
+export interface FetchedRecipe {
+  title: string;
+  slug: string;
+  description: string;
+  prepTime: number;
+  cookTime: number;
+  servings: number;
+  ingredients: Ingredient[];
+  steps: Step[];
+}
