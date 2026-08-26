@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/prisma/client";
 import { RecipeSchema } from "../schema";
 import z from "zod";
-import slugify from "slugify";
-import { nanoid } from "nanoid";
 import { Prisma } from "@/generated/prisma";
 import generateSLug from "@/app/helpers/slugify";
 
@@ -16,10 +14,14 @@ export const GET = async (req: NextRequest, { params }: Params) => {
     const { slug } = await params;
 
     const recipe = await prisma.recipe.findUnique({
-      where: { slug: slug },
+      where: { slug },
       include: {
-        ingredients: { orderBy: { name: "asc" } },
-        steps: { orderBy: { stepNumber: "asc" } },
+        ingredients: {
+          orderBy: { name: "asc" },
+        },
+        steps: {
+          orderBy: { stepNumber: "asc" },
+        },
       },
     });
 
@@ -27,11 +29,20 @@ export const GET = async (req: NextRequest, { params }: Params) => {
       return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: recipe }, { status: 200 });
+    const normalizedRecipe = {
+      ...recipe,
+      ingredients: recipe.ingredients.map((ingredient) => ({
+        ...ingredient,
+        amount: ingredient.amount === null ? null : Number(ingredient.amount),
+      })),
+    };
+
+    return NextResponse.json({ data: normalizedRecipe }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching recipe: ", error);
+    console.error("Error fetching recipe:", error);
+
     return NextResponse.json(
-      { error: " Failed to fetch recipe" },
+      { error: "Failed to fetch recipe" },
       { status: 500 },
     );
   }
@@ -70,7 +81,8 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
       steps,
     } = result.data;
 
-    const updatedSlug = generateSLug(title);
+    const updatedSlug =
+      existingRecipe.title !== title ? generateSLug(title) : slug;
 
     const updatedRecipe = await prisma.$transaction(async (tx) => {
       const recipe = await tx.recipe.update({
@@ -114,7 +126,7 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
 
     return NextResponse.json({ data: updatedRecipe }, { status: 200 });
   } catch (error) {
-    console.error("Failed to update recipe: ", error);
+    console.error("Failed to update recipe: ", JSON.stringify(error));
     return NextResponse.json(
       { error: "Failed to update recipe" },
       { status: 500 },
