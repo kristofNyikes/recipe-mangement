@@ -4,7 +4,7 @@ import { RecipeCardProps } from "@/app/types";
 const RecipeCard = (recipe: RecipeCardProps) => {
   return (
     <Link
-      href={`/recipe/${recipe.slug}`}
+      href={`/main/recipe/${recipe.slug}`}
       className="card bg-base-100 border border-base-300 transition-shadow hover:shadow-md"
     >
       <div className="card-body">
