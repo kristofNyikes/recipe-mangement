@@ -66,3 +66,8 @@ export interface FetchedRecipe {
   ingredients: Ingredient[];
   steps: Step[];
 }
+
+export interface RecipeEditorProps {
+  initialRecipe?: Recipe;
+  slug?: string;
+}
