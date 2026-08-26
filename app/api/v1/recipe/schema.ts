@@ -13,7 +13,7 @@ export const RecipeSchema = z.object({
     .array(
       z.object({
         name: z.string().trim().min(1),
-        amount: z.number().positive(),
+        amount: z.number().positive().optional(),
         unit: z.enum(Unit).optional(),
         note: z.string().trim().optional(),
         stepNumber: z.number().int().positive().optional(),
