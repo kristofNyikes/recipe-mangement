@@ -11,28 +11,28 @@ datasource db {
  * after MVP TODO:
  * -User model
  * -tags (probably enums? or could it be added manually by users? probably bad idea but could be funny)
- * -favorites
  * -images
  * -ratings
  * -comments
  * -categories
- * -collections
  * -pantry
  * -shopping lists (automatically based on pantry)
  */
 
 model Recipe {
-  id          Int          @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   title       String
-  slug        String       @unique
+  slug        String        @unique
   description String?
-  prepTime    Int          @default(0)
-  cookTime    Int          @default(0)
-  servings    Int          @default(1)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  prepTime    Int           @default(0)
+  cookTime    Int           @default(0)
+  servings    Int           @default(1)
+  isFavorite  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   ingredients Ingredient[]
   steps       Step[]
+  collections Collections[]
 }
 
 model Ingredient {
@@ -56,6 +56,14 @@ model Step {
   text       String
 
   @@index([recipeId])
+}
+
+model Collections {
+  id        Int      @id @default(autoincrement())
+  name      String
+  recipes   Recipe[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Unit {
