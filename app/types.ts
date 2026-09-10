@@ -43,6 +43,7 @@ export interface Recipe {
   prepTime: number;
   cookTime: number;
   servings: number;
+  isFavorite: boolean;
   ingredients: Ingredient[];
   steps: Step[];
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Recipe } from "@/app/types";
+import FavoriteButton from "@/app/Components/Buttons/FavoriteButton";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -32,6 +33,7 @@ const RecipePage = async ({ params }: Props) => {
     prepTime: data.prepTime,
     cookTime: data.cookTime,
     servings: data.servings,
+    isFavorite: data.isFavorite,
     ingredients: data.ingredients.map((ingredient: any) => ({
       name: ingredient.name,
       amount:
@@ -53,6 +55,7 @@ const RecipePage = async ({ params }: Props) => {
         <div className="card-body">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
+              <FavoriteButton slug={slug} initialFavorite={recipe.isFavorite} />
               <h1 className="text-3xl font-bold">{recipe.title}</h1>
 
               {recipe.description && (
