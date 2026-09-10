@@ -1,6 +1,6 @@
 import Link from "next/link";
 import RecipeCard from "./RecipeCard";
-import { FetchedRecipe } from "@/app/types";
+import { Recipe } from "@/app/types";
 
 const RecentRecipes = async () => {
   const response = await fetch(
@@ -13,7 +13,7 @@ const RecentRecipes = async () => {
 
   const { data } = await response.json();
 
-  const recipes: FetchedRecipe[] = data;
+  const recipes: Recipe[] = data;
 
   return (
     <div className="card bg-base-200 shadow-sm">
@@ -43,6 +43,9 @@ const RecentRecipes = async () => {
             />
           ))}
         </div>
+        <Link href="/main/recipe" className="underline">
+          Vew All
+        </Link>
       </div>
     </div>
   );

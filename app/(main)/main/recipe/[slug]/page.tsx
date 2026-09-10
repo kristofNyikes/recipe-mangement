@@ -29,6 +29,7 @@ const RecipePage = async ({ params }: Props) => {
 
   const recipe: Recipe = {
     title: data.title,
+    slug: data.slug,
     description: data.description ?? "",
     prepTime: data.prepTime,
     cookTime: data.cookTime,
