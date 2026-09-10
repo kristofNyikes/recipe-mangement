@@ -32,6 +32,11 @@ const Navbar = () => {
               </Link>
             </li>
             <li>
+              <Link href={"/main/recipe"} className="btn my-2.5">
+                All Recipes
+              </Link>
+            </li>
+            <li>
               <Link href={"/main/random-recipe"} className="btn my-2.5">
                 Random recipe
               </Link>
@@ -71,6 +76,11 @@ const Navbar = () => {
           <li>
             <Link href={"/main/editor"} className="btn btn-ghost">
               New recipe
+            </Link>
+          </li>
+          <li>
+            <Link href={"/main/recipe"} className="btn btn-ghost">
+              All Recipes
             </Link>
           </li>
           <li>
