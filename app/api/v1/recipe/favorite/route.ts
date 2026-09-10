@@ -5,7 +5,7 @@ export const GET = async (req: NextRequest) => {
   try {
     const recipes = await prisma.recipe.findMany({
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
       where: { isFavorite: true },
     });

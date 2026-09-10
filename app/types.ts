@@ -40,7 +40,7 @@ export interface RecipeSeed {
 export interface Recipe {
   title: string;
   slug: string;
-  description: string;
+  description?: string;
   prepTime: number;
   cookTime: number;
   servings: number;
@@ -57,18 +57,6 @@ export interface RecipeCardProps {
   cookTime: number;
   servings: number;
 }
-
-// export interface FetchedRecipe {
-//   title: string;
-//   slug: string;
-//   description: string;
-//   prepTime: number;
-//   cookTime: number;
-//   servings: number;
-//   isFavorite: boolean;
-//   ingredients: Ingredient[];
-//   steps: Step[];
-// }
 
 export interface RecipeEditorProps {
   initialRecipe?: Recipe;
