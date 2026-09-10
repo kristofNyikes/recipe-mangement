@@ -12,10 +12,12 @@ interface RecipeEditorProps {
 
 const emptyRecipe: Recipe = {
   title: "",
+  slug: "",
   description: "",
   prepTime: 1,
   cookTime: 1,
   servings: 1,
+  isFavorite: false,
   ingredients: [],
   steps: [],
 };
@@ -128,10 +130,12 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
     e.preventDefault();
     const cleanedRecipe: Recipe = {
       title: recipe.title,
+      slug: recipe.slug || "",
       description: recipe.description,
       prepTime: recipe.prepTime,
       cookTime: recipe.cookTime,
       servings: recipe.servings,
+      isFavorite: recipe.isFavorite || false,
 
       ingredients: recipe.ingredients
         .filter((ingredient) => ingredient.name.trim() !== "")
@@ -167,7 +171,7 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
         },
       );
 
-      const data = await response.json();
+      const { data }: { data: Recipe } = await response.json();
 
       if (!response.ok) {
         console.error(
@@ -180,16 +184,7 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
 
       console.log(`Recipe ${isEditing ? "updated" : "created"}:`, data);
 
-      /*
-       * After updating, return to the recipe page.
-       *
-       * After creating, return to the main page for now.
-       */
-      if (isEditing && slug) {
-        router.push(`/main/recipe/${slug}`);
-      } else {
-        router.push("/main");
-      }
+      router.push(`/main/recipe/${data.slug}`);
     } catch (error) {
       console.error("Failed to contact server:", error);
     } finally {
