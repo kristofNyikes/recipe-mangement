@@ -4,6 +4,9 @@ import prisma from "@/prisma/client";
 export const GET = async (req: NextRequest) => {
   try {
     const recipes = await prisma.recipe.findMany({
+      orderBy: {
+        createdAt: "asc",
+      },
       where: { isFavorite: true },
     });
 
