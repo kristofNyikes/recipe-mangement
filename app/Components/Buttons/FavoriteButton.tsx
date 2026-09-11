@@ -16,7 +16,7 @@ const FavoriteButton = ({ slug, initialFavorite }: Props) => {
     setIsLoading(true);
     const method = isFavorite ? "DELETE" : "POST";
 
-    const response = await fetch(`/api/v1/recipe/${slug}/favorite`, { method });
+    const response = await fetch(`/api/v1/recipe/favorite/${slug}`, { method });
 
     if (response.ok) {
       setIsFavorite(!isFavorite);

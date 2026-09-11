@@ -51,7 +51,6 @@ const RecipePage = async ({ params }: Props) => {
 
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6">
-      {/* Header */}
       <div className="card bg-base-200 shadow-sm">
         <div className="card-body">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -96,9 +95,7 @@ const RecipePage = async ({ params }: Props) => {
         </div>
       </div>
 
-      {/* Recipe content */}
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        {/* Ingredients */}
         <section className="card bg-base-200 shadow-sm lg:col-span-1">
           <div className="card-body">
             <h2 className="card-title">Ingredients</h2>
@@ -129,7 +126,6 @@ const RecipePage = async ({ params }: Props) => {
           </div>
         </section>
 
-        {/* Instructions */}
         <section className="card bg-base-200 shadow-sm lg:col-span-2">
           <div className="card-body">
             <h2 className="card-title">Instructions</h2>
@@ -152,7 +148,6 @@ const RecipePage = async ({ params }: Props) => {
         </section>
       </div>
 
-      {/* Bottom actions */}
       <div className="mt-6 flex justify-end gap-2">
         <Link href={`/main/editor/${slug}`} className="btn btn-primary">
           Edit recipe
