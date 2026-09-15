@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Recipe } from "@/app/types";
 import FavoriteButton from "@/app/Components/Buttons/FavoriteButton";
+import DeleteRecipeButton from "@/app/Components/Buttons/DeleteRecipeButton";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -149,6 +150,7 @@ const RecipePage = async ({ params }: Props) => {
       </div>
 
       <div className="mt-6 flex justify-end gap-2">
+        <DeleteRecipeButton slug={slug} />
         <Link href={`/main/editor/${slug}`} className="btn btn-primary">
           Edit recipe
         </Link>
