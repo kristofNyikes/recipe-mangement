@@ -4,7 +4,7 @@ import { Recipe } from "@/app/types";
 
 const RecentRecipes = async () => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/recipe?page=1&limit=3&sort=desc&summary=true`,
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/recipe?page=1&limit=3&sortBy=createdAt&sortOrder=desc&summary=true`,
   );
 
   if (!response.ok) {

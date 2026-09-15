@@ -62,3 +62,13 @@ export interface RecipeEditorProps {
   initialRecipe?: Recipe;
   slug?: string;
 }
+
+export type RecipeSortBy = "title" | "createdAt" | "updatedAt";
+
+export interface RecipeSummary {
+  title: string;
+  slug: string;
+  prepTime: number;
+  cookTime: number;
+  servings: number;
+}
