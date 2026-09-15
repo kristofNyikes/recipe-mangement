@@ -91,6 +91,8 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
         },
         data: {
           title,
+          //normalizedTitle is here because PostgreSQL case sensitive sorting annoyed me and this was easier
+          normalizedTitle: title.toLowerCase(),
           slug: updatedSlug,
           description,
           prepTime,

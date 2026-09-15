@@ -4,8 +4,10 @@ import { RecipeSchema } from "./schema";
 import z from "zod";
 import generateSLug from "@/app/helpers/slugify";
 import { Prisma } from "@/generated/prisma";
+import { getAllRecipes } from "@/app/lib/requests";
+import { RecipeSortBy } from "@/app/types";
 
-// GET /api/v1/recipe?page=1&limit=10&sort=desc&summary=true
+// GET /api/v1/recipe?page=1&limit=10&sortBy=createdAt&sort=desc&summary=true
 export const GET = async (req: NextRequest) => {
   // TODO: recipe belongs to a user
 
@@ -24,57 +26,30 @@ export const GET = async (req: NextRequest) => {
       ? requestedLimit
       : 10;
 
-  const sort: Prisma.SortOrder =
-    searchParams.get("sort") === "asc" ? "asc" : "desc";
+  const requestedSortBy = searchParams.get("sortBy");
+
+  const sortBy: RecipeSortBy =
+    requestedSortBy === "title" ||
+    requestedSortBy === "createdAt" ||
+    requestedSortBy === "updatedAt"
+      ? requestedSortBy
+      : "createdAt";
+
+  const sortOrder: Prisma.SortOrder =
+    searchParams.get("sortOrder") === "asc" ? "asc" : "desc";
 
   const summary = searchParams.get("summary") === "true";
 
   try {
-    const queryOptions = {
-      skip: (page - 1) * limit,
-      take: limit,
+    const recipes = await getAllRecipes({
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      summary,
+    });
 
-      orderBy: {
-        createdAt: sort,
-      },
-    };
-
-    const recipes = summary
-      ? await prisma.recipe.findMany({
-          ...queryOptions,
-
-          select: {
-            title: true,
-            slug: true,
-            prepTime: true,
-            cookTime: true,
-            servings: true,
-          },
-        })
-      : await prisma.recipe.findMany({
-          ...queryOptions,
-
-          include: {
-            ingredients: true,
-            steps: true,
-          },
-        });
-
-    const count = await prisma.recipe.count();
-
-    return NextResponse.json(
-      {
-        data: recipes,
-
-        pagination: {
-          page,
-          limit,
-          total: count,
-          totalPages: Math.ceil(count / limit),
-        },
-      },
-      { status: 200 },
-    );
+    return NextResponse.json(recipes, { status: 200 });
   } catch (error) {
     console.error("Failed to get recipes:", error);
 
@@ -116,6 +91,8 @@ export const POST = async (req: NextRequest) => {
     const recipe = await prisma.recipe.create({
       data: {
         title,
+        //normalizedTitle is here because PostgreSQL case sensitive sorting annoyed me and this was easier
+        normalizedTitle: title.toLowerCase(),
         slug,
         description,
         prepTime,

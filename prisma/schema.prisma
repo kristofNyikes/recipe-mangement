@@ -20,19 +20,20 @@ datasource db {
  */
 
 model Recipe {
-  id          Int           @id @default(autoincrement())
-  title       String
-  slug        String        @unique
-  description String?
-  prepTime    Int           @default(0)
-  cookTime    Int           @default(0)
-  servings    Int           @default(1)
-  isFavorite  Boolean       @default(false)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  ingredients Ingredient[]
-  steps       Step[]
-  collections Collections[]
+  id              Int           @id @default(autoincrement())
+  title           String
+  normalizedTitle String
+  slug            String        @unique
+  description     String?
+  prepTime        Int           @default(0)
+  cookTime        Int           @default(0)
+  servings        Int           @default(1)
+  isFavorite      Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  ingredients     Ingredient[]
+  steps           Step[]
+  collections     Collections[]
 }
 
 model Ingredient {
