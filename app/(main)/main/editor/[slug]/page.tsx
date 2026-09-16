@@ -30,9 +30,9 @@ const EditRecipePage = async ({ params }: Props) => {
     ingredients: data.ingredients.map(
       (ingredient: Ingredient): Ingredient => ({
         name: ingredient.name,
-        amount: ingredient.amount ?? undefined,
-        unit: ingredient.unit ?? undefined,
-        note: ingredient.note ?? undefined,
+        amount: ingredient.amount ?? null,
+        unit: ingredient.unit ?? null,
+        note: ingredient.note ?? null,
         stepNumber: ingredient.stepNumber ?? undefined,
       }),
     ),

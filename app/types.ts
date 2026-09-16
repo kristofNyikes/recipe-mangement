@@ -16,9 +16,9 @@ export type Unit = (typeof units)[number];
 
 export interface Ingredient {
   name: string;
-  amount?: number;
-  unit?: Unit;
-  note?: string;
+  amount: number | null;
+  unit: Unit | null;
+  note: string | null;
   stepNumber?: number;
 }
 
@@ -40,7 +40,7 @@ export interface RecipeSeed {
 export interface Recipe {
   title: string;
   slug: string;
-  description?: string;
+  description: string | null;
   prepTime: number;
   cookTime: number;
   servings: number;

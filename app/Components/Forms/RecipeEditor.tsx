@@ -13,7 +13,7 @@ interface RecipeEditorProps {
 const emptyRecipe: Recipe = {
   title: "",
   slug: "",
-  description: "",
+  description: null,
   prepTime: 1,
   cookTime: 1,
   servings: 1,
@@ -38,9 +38,9 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
         ...current.ingredients,
         {
           name: "",
-          amount: undefined,
-          unit: undefined,
-          note: undefined,
+          amount: null,
+          unit: null,
+          note: null,
         },
       ],
     }));
@@ -230,7 +230,7 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
           <textarea
             className="textarea w-full"
             placeholder="Describe your recipe..."
-            value={recipe.description}
+            value={recipe.description ?? ""}
             disabled={isSubmitting}
             onChange={(e) =>
               setRecipe((current) => ({
