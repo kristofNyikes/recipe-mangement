@@ -3,7 +3,7 @@ import { Unit } from "@/generated/prisma";
 
 export const RecipeSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
-  description: z.string().optional(),
+  description: z.string().nullable(),
 
   prepTime: z.number().int().nonnegative(),
   cookTime: z.number().int().nonnegative(),
@@ -13,10 +13,10 @@ export const RecipeSchema = z.object({
     .array(
       z.object({
         name: z.string().trim().min(1),
-        amount: z.number().positive().optional(),
-        unit: z.enum(Unit).optional(),
-        note: z.string().trim().optional(),
-        stepNumber: z.number().int().positive().optional(),
+        amount: z.number().positive().nullable(),
+        unit: z.enum(Unit).nullable(),
+        note: z.string().trim().nullable(),
+        stepNumber: z.number().int().positive().nullable().optional(),
       }),
     )
     .min(1, "At least one ingredient is required"),

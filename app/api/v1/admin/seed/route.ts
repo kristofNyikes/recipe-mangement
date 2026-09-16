@@ -10,6 +10,7 @@ export const POST = async () => {
         prisma.recipe.create({
           data: {
             title: recipe.title,
+            normalizedTitle: recipe.title.toLowerCase(),
             slug: generateSLug(recipe.title),
 
             description: recipe.description,
