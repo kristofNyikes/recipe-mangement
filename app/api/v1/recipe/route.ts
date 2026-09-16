@@ -6,6 +6,7 @@ import generateSLug from "@/app/helpers/slugify";
 import { Prisma } from "@/generated/prisma";
 import { getAllRecipes } from "@/app/lib/requests";
 import { RecipeSortBy } from "@/app/types";
+import { revalidatePath } from "next/cache";
 
 // GET /api/v1/recipe?page=1&limit=10&sortBy=createdAt&sort=desc&summary=true
 export const GET = async (req: NextRequest) => {
@@ -122,6 +123,8 @@ export const POST = async (req: NextRequest) => {
         steps: true,
       },
     });
+
+    revalidatePath("/main");
 
     return NextResponse.json({ data: recipe }, { status: 201 });
   } catch (error) {

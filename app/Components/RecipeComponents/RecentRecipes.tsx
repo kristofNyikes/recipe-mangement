@@ -1,19 +1,18 @@
 import Link from "next/link";
 import RecipeCard from "./RecipeCard";
 import { Recipe } from "@/app/types";
+import { getAllRecipes } from "@/app/lib/requests";
 
 const RecentRecipes = async () => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/recipe?page=1&limit=3&sortBy=createdAt&sortOrder=desc&summary=true`,
-  );
+  const result = await getAllRecipes({
+    page: 1,
+    limit: 3,
+    sortBy: "createdAt",
+    sortOrder: "desc",
+    summary: true,
+  });
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch recipes");
-  }
-
-  const { data } = await response.json();
-
-  const recipes: Recipe[] = data;
+  const recipes = result.data as Recipe[];
 
   return (
     <div className="card bg-base-200 shadow-sm">

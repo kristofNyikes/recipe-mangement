@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 type Props = {
   slug: string;
@@ -9,6 +10,8 @@ type Props = {
 };
 
 const FavoriteButton = ({ slug, initialFavorite }: Props) => {
+  const router = useRouter();
+
   const [isFavorite, setIsFavorite] = useState(initialFavorite);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -19,6 +22,7 @@ const FavoriteButton = ({ slug, initialFavorite }: Props) => {
     const response = await fetch(`/api/v1/recipe/favorite/${slug}`, { method });
 
     if (response.ok) {
+      router.refresh();
       setIsFavorite(!isFavorite);
     }
     setIsLoading(false);

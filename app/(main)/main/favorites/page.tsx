@@ -1,18 +1,13 @@
 import RecipeCardExtended from "@/app/Components/RecipeComponents/RecipeCardExtended";
+import { getAllFavoriteRecipes } from "@/app/lib/requests";
 import { Recipe } from "@/app/types";
 
+export const dynamic = "force-dynamic";
+
 const FavoriteRecipes = async () => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/recipe/favorite`,
-  );
+  const result = await getAllFavoriteRecipes();
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch recipes");
-  }
-
-  const { data } = await response.json();
-
-  const recipes: Recipe[] = data;
+  const recipes = result.data as Recipe[];
   return (
     <div>
       {recipes.map((recipe) => (

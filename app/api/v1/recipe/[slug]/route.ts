@@ -4,6 +4,7 @@ import { RecipeSchema } from "../schema";
 import z from "zod";
 import { Prisma } from "@/generated/prisma";
 import generateSLug from "@/app/helpers/slugify";
+import { revalidatePath } from "next/cache";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -126,6 +127,8 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
       return recipe;
     });
 
+    revalidatePath("/main");
+
     return NextResponse.json({ data: updatedRecipe }, { status: 200 });
   } catch (error) {
     console.error("Failed to update recipe: ", JSON.stringify(error));
@@ -143,6 +146,8 @@ export const DELETE = async (_: NextRequest, { params }: Params) => {
     await prisma.recipe.delete({
       where: { slug: slug },
     });
+
+    revalidatePath("/main");
 
     return NextResponse.json({ message: "Recipe deleted" }, { status: 200 });
   } catch (error) {

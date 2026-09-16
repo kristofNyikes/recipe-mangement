@@ -3,6 +3,8 @@ import QuickActions from "@/app/Components/MainPageComponents/QuickActions";
 import RandomRecipeCard from "@/app/Components/MainPageComponents/RandomRecipeCard";
 import RecentRecipes from "@/app/Components/RecipeComponents/RecentRecipes";
 
+export const dynamic = "force-dynamic";
+
 const MainPage = () => {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
