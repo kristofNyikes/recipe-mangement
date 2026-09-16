@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/prisma/client";
+import { getAllFavoriteRecipes } from "@/app/lib/requests";
 
 export const GET = async (req: NextRequest) => {
   try {
-    const recipes = await prisma.recipe.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-      where: { isFavorite: true },
-    });
+    const recipes = await getAllFavoriteRecipes();
 
     return NextResponse.json(
-      { data: recipes, count: recipes.length },
+      { data: recipes.data, count: recipes.data.length },
       { status: 200 },
     );
   } catch (error) {

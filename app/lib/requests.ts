@@ -59,3 +59,18 @@ export const getAllRecipes = async ({
     },
   };
 };
+
+export const getAllFavoriteRecipes = async () => {
+  const recipes = await prisma.recipe.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    where: { isFavorite: true },
+    include: {
+      ingredients: true,
+      steps: true,
+    },
+  });
+
+  return { data: recipes };
+};
