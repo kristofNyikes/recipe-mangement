@@ -323,22 +323,23 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
         <h2 className="text-xl font-semibold">Tags</h2>
 
         {availableTags.length > 0 && (
-          <select
-            className="select mt-3"
-            value=""
-            disabled={isSubmitting}
-            onChange={(e) => handleAddTag(e.target.value as Tag)}
-          >
-            <option value="" disabled>
-              Add tag...
-            </option>
+          <details className="dropdown mt-3">
+            <summary className="btn btn-outline btn-sm">Add tag...</summary>
 
-            {availableTags.map((tag) => (
-              <option key={tag} value={tag}>
-                {tag.toLowerCase()}
-              </option>
-            ))}
-          </select>
+            <ul className="menu dropdown-content z-10 w-52 rounded-box bg-base-100 p-2 shadow-sm">
+              {availableTags.map((tag) => (
+                <li key={tag}>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => handleAddTag(tag)}
+                  >
+                    {tag.toLowerCase()}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -354,7 +355,6 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
           ))}
         </div>
       </section>
-
       {/* Ingredients */}
 
       <section className="mt-8">
