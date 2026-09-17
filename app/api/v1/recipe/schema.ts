@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Unit } from "@/generated/prisma";
+import { tags } from "@/app/types";
 
 export const RecipeSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
@@ -29,4 +30,6 @@ export const RecipeSchema = z.object({
       }),
     )
     .min(1, "At least one step is required"),
+
+  tags: z.array(z.enum(tags)).default([]),
 });

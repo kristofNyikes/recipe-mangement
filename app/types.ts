@@ -14,6 +14,68 @@ export const units = [
 
 export type Unit = (typeof units)[number];
 
+export const tags = [
+  "BREAKFAST",
+  "BRUNCH",
+  "LUNCH",
+  "DINNER",
+  "SNACK",
+  "DESSERT",
+  "APPETIZER",
+  "SIDE_DISH",
+  "SOUP",
+  "SALAD",
+  "SAUCE",
+  "DRINK",
+
+  "HUNGARIAN",
+  "ITALIAN",
+  "MEXICAN",
+  "AMERICAN",
+  "FRENCH",
+  "GREEK",
+  "SPANISH",
+  "INDIAN",
+  "THAI",
+  "JAPANESE",
+  "CHINESE",
+  "KOREAN",
+  "MIDDLE_EASTERN",
+
+  "VEGETARIAN",
+  "VEGAN",
+  "PESCATARIAN",
+  "GLUTEN_FREE",
+  "DAIRY_FREE",
+  "LOW_CARB",
+  "HIGH_PROTEIN",
+
+  "QUICK",
+  "EASY",
+  "MEAL_PREP",
+  "MAKE_AHEAD",
+  "FREEZER_FRIENDLY",
+  "ONE_POT",
+  "SHEET_PAN",
+  "SLOW_COOKER",
+  "PRESSURE_COOKER",
+  "AIR_FRYER",
+  "GRILLED",
+  "BAKED",
+  "NO_BAKE",
+
+  "COMFORT_FOOD",
+  "WEEKDAY",
+  "PARTY",
+  "HOLIDAY",
+  "SUMMER",
+  "WINTER",
+  "SPICY",
+  "SWEET",
+] as const;
+
+export type Tag = (typeof tags)[number];
+
 export interface Ingredient {
   name: string;
   amount: number | null;
@@ -47,6 +109,7 @@ export interface Recipe {
   isFavorite: boolean;
   ingredients: Ingredient[];
   steps: Step[];
+  tags: Tag[];
 }
 
 export interface RecipeCardProps {
