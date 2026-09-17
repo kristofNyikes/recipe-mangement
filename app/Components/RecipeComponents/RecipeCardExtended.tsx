@@ -8,8 +8,10 @@ interface propType {
 
 const RecipeCardExtended = ({ recipe }: propType) => {
   const previewIngredients = recipe.ingredients?.slice(0, 3) ?? [];
-  const remainingCount =
+  const previewTags = recipe.tags?.slice(0, 3) ?? [];
+  const remainingIngredientCount =
     (recipe.ingredients?.length ?? 0) - previewIngredients.length;
+  const remainingTagCount = (recipe.tags?.length ?? 0) - previewTags.length;
 
   return (
     <Link href={`/main/recipe/${recipe.slug}`} className="block">
@@ -65,9 +67,24 @@ const RecipeCardExtended = ({ recipe }: propType) => {
                     {ingredient.name}
                   </span>
                 ))}
-                {remainingCount > 0 && (
+                {remainingIngredientCount > 0 && (
                   <span className="badge badge-ghost badge-sm text-xs">
-                    +{remainingCount} more
+                    +{remainingIngredientCount} more
+                  </span>
+                )}
+              </div>
+            )}
+
+            {previewTags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {previewTags.map((tag) => (
+                  <span key={tag} className="badge badge-success">
+                    {tag.toLowerCase()}
+                  </span>
+                ))}
+                {remainingTagCount > 0 && (
+                  <span className="badge badge-ghost badge-sm text-xs">
+                    +{remainingTagCount} more
                   </span>
                 )}
               </div>
