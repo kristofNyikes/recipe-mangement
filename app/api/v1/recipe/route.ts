@@ -84,6 +84,7 @@ export const POST = async (req: NextRequest) => {
     servings,
     ingredients,
     steps,
+    tags,
   } = result.data;
 
   const slug = generateSLug(title);
@@ -116,6 +117,7 @@ export const POST = async (req: NextRequest) => {
             text: step.text,
           })),
         },
+        tags,
       },
 
       include: {

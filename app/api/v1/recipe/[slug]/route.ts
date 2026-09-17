@@ -80,6 +80,7 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
       servings,
       ingredients,
       steps,
+      tags,
     } = result.data;
 
     const updatedSlug =
@@ -117,6 +118,7 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
               text: step.text,
             })),
           },
+          tags,
         },
 
         include: {
