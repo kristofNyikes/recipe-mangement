@@ -43,6 +43,7 @@ const EditRecipePage = async ({ params }: Props) => {
         text: step.text,
       }),
     ),
+    tags: data.tags,
   };
 
   return <RecipeEditor initialRecipe={recipe} slug={slug} />;

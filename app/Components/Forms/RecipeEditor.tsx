@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import CloseButton from "../Buttons/CloseButton";
 
-import { Recipe, Ingredient, Step, units } from "@/app/types";
+import { Recipe, Ingredient, Step, Tag, units, tags } from "@/app/types";
 
 interface RecipeEditorProps {
   initialRecipe?: Recipe;
@@ -20,6 +21,7 @@ const emptyRecipe: Recipe = {
   isFavorite: false,
   ingredients: [],
   steps: [],
+  tags: [],
 };
 
 const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
@@ -30,6 +32,8 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditing = Boolean(initialRecipe);
+
+  const availableTags = tags.filter((tag) => !recipe.tags.includes(tag));
 
   const addIngredient = () => {
     setRecipe((current) => ({
@@ -126,6 +130,20 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
     }
   };
 
+  const handleAddTag = (tag: Tag) => {
+    setRecipe((current) => ({
+      ...current,
+      tags: [...current.tags, tag],
+    }));
+  };
+
+  const handleDeleteTag = (tag: Tag) => {
+    setRecipe((current) => ({
+      ...current,
+      tags: current.tags.filter((currentTag) => currentTag !== tag),
+    }));
+  };
+
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const cleanedRecipe: Recipe = {
@@ -153,6 +171,7 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
           stepNumber: step.stepNumber,
           text: step.text,
         })),
+      tags: recipe.tags,
     };
 
     setIsSubmitting(true);
@@ -296,6 +315,43 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
               }
             />
           </label>
+        </div>
+      </section>
+
+      {/* Tags */}
+      <section className="mt-6">
+        <h2 className="text-xl font-semibold">Tags</h2>
+
+        {availableTags.length > 0 && (
+          <select
+            className="select mt-3"
+            value=""
+            disabled={isSubmitting}
+            onChange={(e) => handleAddTag(e.target.value as Tag)}
+          >
+            <option value="" disabled>
+              Add tag...
+            </option>
+
+            {availableTags.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag.toLowerCase()}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {recipe.tags.map((tag) => (
+            <span
+              key={tag}
+              className="badge badge-success cursor-pointer p-3"
+              onClick={() => handleDeleteTag(tag)}
+            >
+              {tag.toLowerCase()}
+              <CloseButton />
+            </span>
+          ))}
         </div>
       </section>
 

@@ -48,6 +48,7 @@ const RecipePage = async ({ params }: Props) => {
       stepNumber: step.stepNumber,
       text: step.text,
     })),
+    tags: data.tags,
   };
 
   return (
