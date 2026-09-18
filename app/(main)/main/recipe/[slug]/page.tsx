@@ -97,10 +97,7 @@ const RecipePage = async ({ params }: Props) => {
           <div className="mt-6 flex flex-wrap gap-3 items-center">
             <h3 className="text-xl font-bold inline">Tags:</h3>
             {recipe.tags.map((tag) => (
-              <span
-                key={tag}
-                className="badge badge-success cursor-pointer p-3"
-              >
+              <span key={tag} className="badge badge-success p-3">
                 {tag.toLowerCase()}
               </span>
             ))}
