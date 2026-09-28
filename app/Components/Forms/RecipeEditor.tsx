@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import CloseButton from "../Buttons/CloseButton";
 
 import { Recipe, Ingredient, Step, Tag, units, tags } from "@/app/types";
+import { tagCapitalize } from "@/app/helpers/tagCapitalize";
 
 interface RecipeEditorProps {
   initialRecipe?: Recipe;
@@ -334,7 +335,7 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
                     disabled={isSubmitting}
                     onClick={() => handleAddTag(tag)}
                   >
-                    {tag.toLowerCase()}
+                    {tagCapitalize(tag)}
                   </button>
                 </li>
               ))}
@@ -349,7 +350,7 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
               className="badge badge-success cursor-pointer p-3"
               onClick={() => handleDeleteTag(tag)}
             >
-              {tag.toLowerCase()}
+              {tagCapitalize(tag)}
               <CloseButton />
             </span>
           ))}

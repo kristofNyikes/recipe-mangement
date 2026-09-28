@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Recipe } from "@/app/types";
 import Image from "next/image";
+import { tagCapitalize } from "@/app/helpers/tagCapitalize";
 
 interface propType {
   recipe: Recipe;
@@ -79,7 +80,7 @@ const RecipeCardExtended = ({ recipe }: propType) => {
               <div className="flex flex-wrap gap-1.5">
                 {previewTags.map((tag) => (
                   <span key={tag} className="badge badge-success">
-                    {tag.toLowerCase()}
+                    {tagCapitalize(tag)}
                   </span>
                 ))}
                 {remainingTagCount > 0 && (

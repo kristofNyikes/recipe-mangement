@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Recipe } from "@/app/types";
 import FavoriteButton from "@/app/Components/Buttons/FavoriteButton";
 import DeleteRecipeButton from "@/app/Components/Buttons/DeleteRecipeButton";
+import { tagCapitalize } from "@/app/helpers/tagCapitalize";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -98,7 +99,7 @@ const RecipePage = async ({ params }: Props) => {
             <h3 className="text-xl font-bold inline">Tags:</h3>
             {recipe.tags.map((tag) => (
               <span key={tag} className="badge badge-success p-3">
-                {tag.toLowerCase()}
+                {tagCapitalize(tag)}
               </span>
             ))}
           </div>
