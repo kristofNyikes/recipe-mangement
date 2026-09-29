@@ -20,20 +20,20 @@ datasource db {
  */
 
 model Recipe {
-  id              Int           @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   title           String
   normalizedTitle String
-  slug            String        @unique
+  slug            String       @unique
   description     String?
-  prepTime        Int           @default(0)
-  cookTime        Int           @default(0)
-  servings        Int           @default(1)
-  isFavorite      Boolean       @default(false)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  prepTime        Int          @default(0)
+  cookTime        Int          @default(0)
+  servings        Int          @default(1)
+  isFavorite      Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   ingredients     Ingredient[]
   steps           Step[]
-  collections     Collections[]
+  collections     Collection[]
   tags            Tag[]
 }
 
@@ -60,9 +60,10 @@ model Step {
   @@index([recipeId])
 }
 
-model Collections {
+model Collection {
   id        Int      @id @default(autoincrement())
   name      String
+  slug      String   @unique
   recipes   Recipe[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

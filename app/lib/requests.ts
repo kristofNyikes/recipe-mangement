@@ -1,6 +1,7 @@
 import prisma from "@/prisma/client";
 import { Prisma } from "@/generated/prisma";
 import { Tag } from "../types";
+import generateSLug from "../helpers/slugify";
 
 interface GetRecipesOptions {
   page: number;
@@ -80,4 +81,23 @@ export const getAllFavoriteRecipes = async () => {
   });
 
   return { data: recipes };
+};
+
+export const createCollection = async (name: string) => {
+  const slug = generateSLug(name);
+
+  return prisma.collection.create({
+    data: {
+      name,
+      slug,
+    },
+  });
+};
+
+export const getAllCollections = async () => {
+  return prisma.collection.findMany({
+    orderBy: {
+      name: "asc",
+    },
+  });
 };

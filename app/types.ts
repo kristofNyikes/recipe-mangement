@@ -135,3 +135,12 @@ export interface RecipeSummary {
   cookTime: number;
   servings: number;
 }
+
+export interface Collection {
+  name: string;
+  slug: string;
+}
+
+export interface CreateCollection {
+  name: string;
+}
