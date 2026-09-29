@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import CloseButton from "../Buttons/CloseButton";
 
@@ -35,6 +35,26 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
   const isEditing = Boolean(initialRecipe);
 
   const availableTags = tags.filter((tag) => !recipe.tags.includes(tag));
+
+  const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
+  const tagMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        tagMenuRef.current &&
+        !tagMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsTagMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const addIngredient = () => {
     setRecipe((current) => ({
@@ -324,23 +344,32 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
         <h2 className="text-xl font-semibold">Tags</h2>
 
         {availableTags.length > 0 && (
-          <details className="dropdown mt-3">
-            <summary className="btn btn-outline btn-sm">Add tag...</summary>
+          <div ref={tagMenuRef} className="relative mt-3 w-fit">
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              disabled={isSubmitting}
+              onClick={() => setIsTagMenuOpen((open) => !open)}
+            >
+              Add tag...
+            </button>
 
-            <ul className="menu dropdown-content z-10 w-52 rounded-box bg-base-100 p-2 shadow-sm">
-              {availableTags.map((tag) => (
-                <li key={tag}>
-                  <button
-                    type="button"
-                    disabled={isSubmitting}
-                    onClick={() => handleAddTag(tag)}
-                  >
-                    {tagCapitalize(tag)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </details>
+            {isTagMenuOpen && (
+              <ul className="menu absolute z-10 mt-1 max-h-96 w-52 flex-nowrap overflow-y-auto rounded-box bg-base-100 p-2 shadow-sm">
+                {availableTags.map((tag) => (
+                  <li key={tag}>
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => handleAddTag(tag)}
+                    >
+                      {tagCapitalize(tag)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
 
         <div className="mt-3 flex flex-wrap gap-2">

@@ -5,8 +5,9 @@ import z from "zod";
 import generateSLug from "@/app/helpers/slugify";
 import { Prisma } from "@/generated/prisma";
 import { getAllRecipes } from "@/app/lib/requests";
-import { RecipeSortBy } from "@/app/types";
+import { RecipeSortBy, Tag, tags } from "@/app/types";
 import { revalidatePath } from "next/cache";
+import { parseTags } from "@/app/helpers/parseTags";
 
 // GET /api/v1/recipe?page=1&limit=10&sortBy=createdAt&sort=desc&summary=true
 export const GET = async (req: NextRequest) => {
@@ -16,6 +17,9 @@ export const GET = async (req: NextRequest) => {
 
   const requestedPage = Number(searchParams.get("page"));
   const requestedLimit = Number(searchParams.get("limit"));
+  const requestedTags = searchParams.getAll("tags");
+
+  const selectedTags: Tag[] = parseTags(requestedTags);
 
   const page =
     Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
@@ -48,6 +52,7 @@ export const GET = async (req: NextRequest) => {
       sortBy,
       sortOrder,
       summary,
+      tags: selectedTags,
     });
 
     return NextResponse.json(recipes, { status: 200 });

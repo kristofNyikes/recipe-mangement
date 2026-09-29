@@ -1,5 +1,6 @@
 import prisma from "@/prisma/client";
 import { Prisma } from "@/generated/prisma";
+import { Tag } from "../types";
 
 interface GetRecipesOptions {
   page: number;
@@ -7,6 +8,7 @@ interface GetRecipesOptions {
   sortBy: "title" | "createdAt" | "updatedAt";
   sortOrder: Prisma.SortOrder;
   summary: boolean;
+  tags?: Tag[];
 }
 
 export const getAllRecipes = async ({
@@ -15,6 +17,7 @@ export const getAllRecipes = async ({
   sortBy,
   sortOrder,
   summary,
+  tags,
 }: GetRecipesOptions) => {
   const sortField = sortBy === "title" ? "normalizedTitle" : sortBy;
   const queryOptions = {
@@ -26,10 +29,14 @@ export const getAllRecipes = async ({
     },
   };
 
+  const where: Prisma.RecipeWhereInput = tags?.length
+    ? { tags: { hasSome: tags } }
+    : {};
+
   const recipes = summary
     ? await prisma.recipe.findMany({
         ...queryOptions,
-
+        where,
         select: {
           title: true,
           slug: true,
@@ -40,14 +47,14 @@ export const getAllRecipes = async ({
       })
     : await prisma.recipe.findMany({
         ...queryOptions,
-
+        where,
         include: {
           ingredients: true,
           steps: true,
         },
       });
 
-  const count = await prisma.recipe.count();
+  const count = await prisma.recipe.count({ where });
 
   return {
     data: recipes,

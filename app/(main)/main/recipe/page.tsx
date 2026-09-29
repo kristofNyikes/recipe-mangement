@@ -1,12 +1,15 @@
 import RecipeFilters from "@/app/Components/Buttons/RecipeFilters";
+import TagCheckbox from "@/app/Components/Checkbox/TagCheckbox";
 import RecipeCardExtended from "@/app/Components/RecipeComponents/RecipeCardExtended";
+import { parseTags } from "@/app/helpers/parseTags";
 import { getAllRecipes } from "@/app/lib/requests";
-import { Recipe, RecipeSummary } from "@/app/types";
+import { Recipe, Tag, tags } from "@/app/types";
 
 interface AllRecipesProps {
   searchParams: Promise<{
     sortBy?: string;
     sortOrder?: string;
+    tags: string;
   }>;
 }
 
@@ -25,15 +28,7 @@ const AllRecipes = async ({ searchParams }: AllRecipesProps) => {
       ? params.sortOrder
       : "desc";
 
-  // const response = await fetch(
-  //   `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/recipe?page=1&limit=10&sortBy=createdAt&sortOrder=desc&summary=true`,
-  // );
-
-  // if (!response.ok) {
-  //   throw new Error("Failed to fetch recipes");
-  // }
-
-  // const { data } = await response.json();
+  const selectedTags: Tag[] = parseTags(params.tags);
 
   const result = await getAllRecipes({
     page: 1,
@@ -41,12 +36,16 @@ const AllRecipes = async ({ searchParams }: AllRecipesProps) => {
     sortBy,
     sortOrder,
     summary: false,
+    tags: selectedTags,
   });
 
   const recipes = result.data as Recipe[];
   return (
     <div>
-      <RecipeFilters />
+      <div className="flex">
+        <RecipeFilters />
+        <TagCheckbox />
+      </div>
       {recipes.map((recipe) => (
         <RecipeCardExtended recipe={recipe} key={recipe.slug} />
       ))}
