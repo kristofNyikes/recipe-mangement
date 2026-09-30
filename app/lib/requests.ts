@@ -101,3 +101,24 @@ export const getAllCollections = async () => {
     },
   });
 };
+
+export const updateCollection = async (slug: string, name: string) => {
+  const newSlug = generateSLug(name);
+  return prisma.collection.update({
+    where: {
+      slug,
+    },
+    data: {
+      name,
+      slug: newSlug,
+    },
+  });
+};
+
+export const deleteCollection = async (slug: string) => {
+  return prisma.collection.delete({
+    where: {
+      slug,
+    },
+  });
+};
