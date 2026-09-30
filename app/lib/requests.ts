@@ -95,11 +95,23 @@ export const createCollection = async (name: string) => {
 };
 
 export const getAllCollections = async () => {
-  return prisma.collection.findMany({
+  const collections = await prisma.collection.findMany({
     orderBy: {
       name: "asc",
     },
+    include: {
+      _count: {
+        select: {
+          recipes: true,
+        },
+      },
+    },
   });
+
+  return collections.map(({ _count, ...collection }) => ({
+    ...collection,
+    recipeCount: _count.recipes,
+  }));
 };
 
 export const updateCollection = async (slug: string, name: string) => {
@@ -119,6 +131,67 @@ export const deleteCollection = async (slug: string) => {
   return prisma.collection.delete({
     where: {
       slug,
+    },
+  });
+};
+
+export const getCollectionRecipes = async (slug: string) => {
+  const collection = await prisma.collection.findUnique({
+    where: {
+      slug,
+    },
+    select: {
+      recipes: true,
+      _count: {
+        select: {
+          recipes: true,
+        },
+      },
+    },
+  });
+
+  if (!collection) {
+    return null;
+  }
+
+  return {
+    recipes: collection.recipes,
+    recipeCount: collection._count.recipes,
+  };
+};
+
+export const addRecipeToCollection = async (
+  collectionSlug: string,
+  recipeSlug: string,
+) => {
+  return prisma.collection.update({
+    where: {
+      slug: collectionSlug,
+    },
+    data: {
+      recipes: {
+        connect: {
+          slug: recipeSlug,
+        },
+      },
+    },
+  });
+};
+
+export const deleteRecipeFromCollection = async (
+  collectionSlug: string,
+  recipeSlug: string,
+) => {
+  return prisma.collection.update({
+    where: {
+      slug: collectionSlug,
+    },
+    data: {
+      recipes: {
+        disconnect: {
+          slug: recipeSlug,
+        },
+      },
     },
   });
 };
