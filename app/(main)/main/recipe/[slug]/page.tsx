@@ -4,6 +4,8 @@ import { Recipe } from "@/app/types";
 import FavoriteButton from "@/app/Components/Buttons/FavoriteButton";
 import DeleteRecipeButton from "@/app/Components/Buttons/DeleteRecipeButton";
 import { tagCapitalize } from "@/app/helpers/tagCapitalize";
+import SaveToCollectionButton from "@/app/Components/Buttons/SaveToCollectionButton";
+import { getRecentCollectionsForRecipe } from "@/app/lib/requests";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -52,6 +54,8 @@ const RecipePage = async ({ params }: Props) => {
     tags: data.tags,
   };
 
+  const collections = await getRecentCollectionsForRecipe(slug);
+
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6">
       <div className="card bg-base-200 shadow-sm">
@@ -69,6 +73,10 @@ const RecipePage = async ({ params }: Props) => {
             </div>
 
             <div className="flex gap-2">
+              <SaveToCollectionButton
+                recipeSlug={recipe.slug}
+                collections={collections}
+              />
               <Link
                 href={`/main/editor/${slug}`}
                 className="btn btn-primary btn-sm"

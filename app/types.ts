@@ -81,7 +81,7 @@ export interface Ingredient {
   amount: number | null;
   unit: Unit | null;
   note: string | null;
-  stepNumber?: number;
+  stepNumber?: number | null;
 }
 
 export interface Step {
@@ -139,6 +139,7 @@ export interface RecipeSummary {
 export interface Collection {
   name: string;
   slug: string;
+  recipeCount: number;
 }
 
 export interface CreateCollection {

@@ -123,6 +123,16 @@ export const getAllCollections = async ({
             recipes: true,
           },
         },
+        recipes: {
+          take: 5,
+          orderBy: {
+            normalizedTitle: "asc",
+          },
+          select: {
+            title: true,
+            slug: true,
+          },
+        },
       },
     }),
     prisma.collection.count(),
@@ -164,11 +174,15 @@ export const deleteCollection = async (slug: string) => {
 
 export const getCollectionRecipes = async (slug: string) => {
   const collection = await prisma.collection.findUnique({
-    where: {
-      slug,
-    },
+    where: { slug },
     select: {
-      recipes: true,
+      name: true,
+      recipes: {
+        include: {
+          ingredients: true,
+          steps: true,
+        },
+      },
       _count: {
         select: {
           recipes: true,
@@ -177,12 +191,17 @@ export const getCollectionRecipes = async (slug: string) => {
     },
   });
 
-  if (!collection) {
-    return null;
-  }
+  if (!collection) return null;
 
   return {
-    recipes: collection.recipes,
+    name: collection.name,
+    recipes: collection.recipes.map((recipe) => ({
+      ...recipe,
+      ingredients: recipe.ingredients.map((ingredient) => ({
+        ...ingredient,
+        amount: ingredient.amount?.toNumber() ?? null,
+      })),
+    })),
     recipeCount: collection._count.recipes,
   };
 };
@@ -201,6 +220,7 @@ export const addRecipeToCollection = async (
           slug: recipeSlug,
         },
       },
+      updatedAt: new Date(),
     },
   });
 };
@@ -219,6 +239,34 @@ export const deleteRecipeFromCollection = async (
           slug: recipeSlug,
         },
       },
+      updatedAt: new Date(),
     },
   });
+};
+
+export const getRecentCollectionsForRecipe = async (recipeSlug: string) => {
+  const collections = await prisma.collection.findMany({
+    take: 10,
+    orderBy: {
+      updatedAt: "desc",
+    },
+    select: {
+      name: true,
+      slug: true,
+      recipes: {
+        where: {
+          slug: recipeSlug,
+        },
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+
+  return collections.map((collection) => ({
+    name: collection.name,
+    slug: collection.slug,
+    containsRecipe: collection.recipes.length > 0,
+  }));
 };
