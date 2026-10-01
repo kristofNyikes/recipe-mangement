@@ -144,3 +144,5 @@ export interface Collection {
 export interface CreateCollection {
   name: string;
 }
+
+export type CollectionSortBy = "name" | "createdAt" | "updatedAt";

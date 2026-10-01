@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCollection, getAllCollections } from "@/app/lib/requests";
 import { createCollectionSchema } from "./schema";
+import { CollectionSortBy } from "@/app/types";
+import { Prisma } from "@/generated/prisma";
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -26,14 +28,47 @@ export const POST = async (req: NextRequest) => {
   }
 };
 
-export const GET = async () => {
-  try {
-    const collection = await getAllCollections();
+export const GET = async (req: NextRequest) => {
+  const { searchParams } = req.nextUrl;
 
-    return NextResponse.json(collection, { status: 200 });
+  const requestedPage = Number(searchParams.get("page"));
+  const requestedLimit = Number(searchParams.get("limit"));
+  const requestedSortBy = searchParams.get("sortBy");
+
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+
+  const limit =
+    Number.isInteger(requestedLimit) &&
+    requestedLimit > 0 &&
+    requestedLimit <= 100
+      ? requestedLimit
+      : 10;
+
+  const sortBy: CollectionSortBy =
+    requestedSortBy === "name" ||
+    requestedSortBy === "createdAt" ||
+    requestedSortBy === "updatedAt"
+      ? requestedSortBy
+      : "updatedAt";
+
+  const sortOrder: Prisma.SortOrder =
+    searchParams.get("sortOrder") === "asc" ? "asc" : "desc";
+
+  try {
+    const collections = await getAllCollections({
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    });
+
+    return NextResponse.json(collections, { status: 200 });
   } catch (error) {
+    console.error("Failed to get collections:", error);
+
     return NextResponse.json(
-      { error: "Failed to get collections" },
+      { error: "Failed to get collections." },
       { status: 500 },
     );
   }

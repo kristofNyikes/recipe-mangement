@@ -1,6 +1,6 @@
 import prisma from "@/prisma/client";
 import { Prisma } from "@/generated/prisma";
-import { Tag } from "../types";
+import { CollectionSortBy, Tag } from "../types";
 import generateSLug from "../helpers/slugify";
 
 interface GetRecipesOptions {
@@ -89,29 +89,55 @@ export const createCollection = async (name: string) => {
   return prisma.collection.create({
     data: {
       name,
+      normalizedName: name.toLowerCase(),
       slug,
     },
   });
 };
 
-export const getAllCollections = async () => {
-  const collections = await prisma.collection.findMany({
-    orderBy: {
-      name: "asc",
-    },
-    include: {
-      _count: {
-        select: {
-          recipes: true,
+export const getAllCollections = async ({
+  page,
+  limit,
+  sortBy,
+  sortOrder,
+}: {
+  page: number;
+  limit: number;
+  sortBy: CollectionSortBy;
+  sortOrder: Prisma.SortOrder;
+}) => {
+  const skip = (page - 1) * limit;
+
+  const orderByField = sortBy === "name" ? "normalizedName" : sortBy;
+
+  const [collections, total] = await prisma.$transaction([
+    prisma.collection.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        [orderByField]: sortOrder,
+      },
+      include: {
+        _count: {
+          select: {
+            recipes: true,
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.collection.count(),
+  ]);
 
-  return collections.map(({ _count, ...collection }) => ({
-    ...collection,
-    recipeCount: _count.recipes,
-  }));
+  return {
+    collections: collections.map(({ _count, ...collection }) => ({
+      ...collection,
+      recipeCount: _count.recipes,
+    })),
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 export const updateCollection = async (slug: string, name: string) => {
@@ -122,6 +148,7 @@ export const updateCollection = async (slug: string, name: string) => {
     },
     data: {
       name,
+      normalizedName: name.toLowerCase(),
       slug: newSlug,
     },
   });
