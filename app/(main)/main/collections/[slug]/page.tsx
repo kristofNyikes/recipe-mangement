@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import CollectionRecipeList from "@/app/Components/CollectionComponents/CollectionRecipeList";
 
 import { getCollectionRecipes } from "@/app/lib/requests";
+import CollectionActions from "@/app/Components/CollectionComponents/CollectionActions";
 
 interface CollectionPageProps {
   params: Promise<{
@@ -44,6 +45,8 @@ const CollectionPage = async ({ params }: CollectionPageProps) => {
           collectionSlug={slug}
           recipes={collection.recipes}
         />
+
+        <CollectionActions slug={slug} name={collection.name} />
       </main>
     );
   } catch (error) {

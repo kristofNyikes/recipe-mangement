@@ -23,7 +23,12 @@ export const PUT = async (req: NextRequest, { params }: RouteParams) => {
     const collection = await updateCollection(slug, result.data.name);
 
     return NextResponse.json(collection, { status: 200 });
-  } catch (error) {}
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update collection." },
+      { status: 500 },
+    );
+  }
 };
 
 export const DELETE = async (req: NextRequest, { params }: RouteParams) => {
