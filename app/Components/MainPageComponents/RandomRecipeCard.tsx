@@ -60,6 +60,7 @@ const RandomRecipeCard = () => {
           className="btn btn-primary"
           onClick={() => void surpriseMe()}
           disabled={isLoading}
+          {...({ autoComplete: "off" } as Record<string, string>)}
         >
           {isLoading ? (
             <>
