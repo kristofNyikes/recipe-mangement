@@ -11,7 +11,7 @@ const QuickActions = () => {
             + New recipe
           </Link>
 
-          <Link href="/main/random-recipe" className="btn btn-soft">
+          <Link href="/main/recipe/random-recipe" className="btn btn-soft">
             🎲 Random recipe
           </Link>
         </div>

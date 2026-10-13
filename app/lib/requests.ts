@@ -270,3 +270,51 @@ export const getRecentCollectionsForRecipe = async (recipeSlug: string) => {
     containsRecipe: collection.recipes.length > 0,
   }));
 };
+
+export const getRandomRecipe = async ({
+  tags = [],
+  matchMode = "any",
+}: {
+  tags?: Tag[];
+  matchMode?: "any" | "all";
+}) => {
+  const where =
+    tags.length === 0
+      ? {}
+      : {
+          tags: matchMode === "all" ? { hasEvery: tags } : { hasSome: tags },
+        };
+
+  const matchingRecipes = await prisma.recipe.findMany({
+    where,
+    select: { id: true },
+  });
+
+  if (matchingRecipes.length === 0) {
+    return null;
+  }
+
+  // Pick one matching recipe at random.
+  const randomIndex = Math.floor(Math.random() * matchingRecipes.length);
+  const selectedId = matchingRecipes[randomIndex].id;
+
+  const recipe = await prisma.recipe.findUnique({
+    where: { id: selectedId },
+    include: {
+      ingredients: true,
+      steps: true,
+    },
+  });
+
+  if (!recipe) {
+    return null;
+  }
+
+  return {
+    ...recipe,
+    ingredients: recipe.ingredients.map((ingredient) => ({
+      ...ingredient,
+      amount: ingredient.amount?.toNumber() ?? null,
+    })),
+  };
+};
