@@ -17,6 +17,16 @@ const RecipeCardExtended = ({ recipe }: propType) => {
   return (
     <Link href={`/main/recipe/${recipe.slug}`} className="block">
       <div className="card bg-base-200 shadow-sm mx-6 my-4 transition hover:-translate-y-1 hover:shadow-lg">
+        {recipe.imagePath && (
+          <Image
+            src={`/api/v1/recipe/image/${recipe.imagePath}`}
+            alt={`${recipe.title} recipe`}
+            width={800}
+            height={600}
+            className="h-48 w-full object-cover"
+            unoptimized
+          />
+        )}
         <div className="card-body">
           <div className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-4">

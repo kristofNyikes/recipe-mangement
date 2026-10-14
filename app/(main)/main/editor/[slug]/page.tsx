@@ -44,6 +44,7 @@ const EditRecipePage = async ({ params }: Props) => {
       }),
     ),
     tags: data.tags,
+    imagePath: data.imagePath,
   };
 
   return <RecipeEditor initialRecipe={recipe} slug={slug} />;
