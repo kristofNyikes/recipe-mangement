@@ -5,6 +5,11 @@ import z from "zod";
 import { Prisma } from "@/generated/prisma";
 import generateSLug from "@/app/helpers/slugify";
 import { revalidatePath } from "next/cache";
+import { unlink } from "node:fs/promises";
+import {
+  getRecipeImagePath,
+  isRecipeImageFilename,
+} from "@/app/lib/recipeImages";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -145,15 +150,50 @@ export const DELETE = async (_: NextRequest, { params }: Params) => {
   const { slug } = await params;
 
   try {
-    await prisma.recipe.delete({
-      where: { slug: slug },
+    // Find the recipe and remember its image filename.
+    const recipe = await prisma.recipe.findUnique({
+      where: { slug },
+      select: { imagePath: true },
     });
+
+    if (!recipe) {
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    }
+
+    // Delete the database record first.
+    await prisma.recipe.delete({
+      where: { slug },
+    });
+
+    // Clean up the associated image, if one exists.
+    if (recipe.imagePath) {
+      if (isRecipeImageFilename(recipe.imagePath)) {
+        try {
+          await unlink(getRecipeImagePath(recipe.imagePath));
+        } catch (error) {
+          // A missing file is already cleaned up.
+          if (
+            !(error instanceof Error) ||
+            !("code" in error) ||
+            error.code !== "ENOENT"
+          ) {
+            console.error("Recipe deleted, but image cleanup failed:", error);
+          }
+        }
+      } else {
+        console.error(
+          "Recipe deleted, but its image filename was invalid:",
+          recipe.imagePath,
+        );
+      }
+    }
 
     revalidatePath("/main");
 
     return NextResponse.json({ message: "Recipe deleted" }, { status: 200 });
   } catch (error) {
-    console.error("Failed to delete recipe: ", error);
+    console.error("Failed to delete recipe:", error);
+
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2025"
