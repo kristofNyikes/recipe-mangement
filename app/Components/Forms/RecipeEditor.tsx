@@ -6,6 +6,7 @@ import CloseButton from "../Buttons/CloseButton";
 
 import { Recipe, Ingredient, Step, Tag, units, tags } from "@/app/types";
 import { tagCapitalize } from "@/app/helpers/tagCapitalize";
+import Image from "next/image";
 
 interface RecipeEditorProps {
   initialRecipe?: Recipe;
@@ -32,12 +33,19 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isEditing = Boolean(initialRecipe);
-
   const availableTags = tags.filter((tag) => !recipe.tags.includes(tag));
 
   const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
   const tagMenuRef = useRef<HTMLDivElement>(null);
+
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+  const [savedRecipeSlug, setSavedRecipeSlug] = useState<string | null>(null);
+  const [removeExistingImage, setRemoveExistingImage] = useState(false);
+
+  const isEditing = Boolean(initialRecipe || savedRecipeSlug);
+  const recipeSlug = slug ?? savedRecipeSlug ?? initialRecipe?.slug;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,6 +63,18 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (!selectedImage) {
+      setImagePreview(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(selectedImage);
+    setImagePreview(previewUrl);
+
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [selectedImage]);
 
   const addIngredient = () => {
     setRecipe((current) => ({
@@ -141,11 +161,14 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
 
   const handleReset = () => {
     setRecipe(initialRecipe ?? emptyRecipe);
+    setSelectedImage(null);
+    setRemoveExistingImage(false);
+    setImageUploadError(null);
   };
 
   const handleDiscard = () => {
-    if (isEditing && slug) {
-      router.push(`/main/recipe/${slug}`);
+    if (isEditing && recipeSlug) {
+      router.push(`/main/recipe/${recipeSlug}`);
     } else {
       router.push("/main");
     }
@@ -165,8 +188,9 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
     }));
   };
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     const cleanedRecipe: Recipe = {
       title: recipe.title,
       slug: recipe.slug || "",
@@ -192,17 +216,20 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
           stepNumber: step.stepNumber,
           text: step.text,
         })),
+
       tags: recipe.tags,
     };
 
     setIsSubmitting(true);
+    setImageUploadError(null);
 
     try {
-      const response = await fetch(
-        isEditing ? `/api/v1/recipe/${slug}` : "/api/v1/recipe",
-        {
-          method: isEditing ? "PUT" : "POST",
+      const updating = Boolean(isEditing && recipeSlug);
 
+      const response = await fetch(
+        updating ? `/api/v1/recipe/${recipeSlug}` : "/api/v1/recipe",
+        {
+          method: updating ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json",
           },
@@ -211,20 +238,79 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
         },
       );
 
-      const { data }: { data: Recipe } = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
         console.error(
-          `Failed to ${isEditing ? "update" : "create"} recipe:`,
-          JSON.stringify(data, null, 2),
+          `Failed to ${updating ? "update" : "create"} recipe:`,
+          result,
         );
-
         return;
       }
 
-      console.log(`Recipe ${isEditing ? "updated" : "created"}:`, data);
+      const savedRecipe = result.data as Recipe;
 
-      router.push(`/main/recipe/${data.slug}`);
+      if (!savedRecipe?.slug) {
+        console.error("Recipe was saved, but the response had no slug.");
+        return;
+      }
+
+      // Remember the saved recipe, including if its image upload fails.
+      setSavedRecipeSlug(savedRecipe.slug);
+
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append("image", selectedImage);
+
+        const imageResponse = await fetch(
+          `/api/v1/recipe/${savedRecipe.slug}/image`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+
+        const imageResult = await imageResponse.json();
+
+        if (!imageResponse.ok) {
+          console.error("Recipe saved, but image upload failed:", imageResult);
+
+          setImageUploadError(
+            imageResult.error ??
+              "Recipe saved, but the image upload failed. Please try saving again.",
+          );
+
+          return;
+        }
+
+        setSelectedImage(null);
+      } else if (removeExistingImage && initialRecipe?.imagePath) {
+        const imageResponse = await fetch(
+          `/api/v1/recipe/${savedRecipe.slug}/image`,
+          {
+            method: "DELETE",
+          },
+        );
+
+        const imageResult = await imageResponse.json();
+
+        if (!imageResponse.ok) {
+          console.error("Recipe saved, but image removal failed:", imageResult);
+
+          setImageUploadError(
+            imageResult.error ??
+              "Recipe saved, but removing the image failed. Please try saving again.",
+          );
+
+          return;
+        }
+
+        setRemoveExistingImage(false);
+      }
+
+      console.log(`Recipe ${updating ? "updated" : "created"}:`, savedRecipe);
+
+      router.push(`/main/recipe/${savedRecipe.slug}`);
     } catch (error) {
       console.error("Failed to contact server:", error);
     } finally {
@@ -279,6 +365,78 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
               }))
             }
           />
+        </div>
+
+        <div className="mt-4">
+          <label htmlFor="recipe-image" className="label">
+            Recipe image (optional)
+          </label>
+
+          <input
+            id="recipe-image"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="file-input w-full"
+            disabled={isSubmitting}
+            onChange={(e) => {
+              setSelectedImage(e.target.files?.[0] ?? null);
+              setRemoveExistingImage(false);
+              setImageUploadError(null);
+            }}
+          />
+
+          {imagePreview && (
+            <div className="mt-3">
+              <img
+                src={imagePreview}
+                alt="Selected recipe preview"
+                className="max-h-64 rounded-box object-contain"
+              />
+
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm mt-2"
+                disabled={isSubmitting}
+                onClick={() => setSelectedImage(null)}
+              >
+                Remove selected image
+              </button>
+            </div>
+          )}
+          {!imagePreview &&
+            !removeExistingImage &&
+            initialRecipe?.imagePath && (
+              <div className="mt-3">
+                <div className="flex max-h-64 justify-start overflow-hidden">
+                  <Image
+                    width={800}
+                    height={600}
+                    src={`/api/v1/recipe/image/${initialRecipe.imagePath}`}
+                    alt={`${initialRecipe.title} recipe`}
+                    className="h-auto max-h-64 w-auto max-w-full rounded-box object-contain"
+                    unoptimized
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-error btn-outline btn-sm mt-2"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    setRemoveExistingImage(true);
+                    setImageUploadError(null);
+                  }}
+                >
+                  Remove current image
+                </button>
+              </div>
+            )}
+
+          {imageUploadError && (
+            <p role="alert" className="mt-2 text-error">
+              {imageUploadError}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col">
