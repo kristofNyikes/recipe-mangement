@@ -6,6 +6,7 @@ import DeleteRecipeButton from "@/app/Components/Buttons/DeleteRecipeButton";
 import { tagCapitalize } from "@/app/helpers/tagCapitalize";
 import SaveToCollectionButton from "@/app/Components/Buttons/SaveToCollectionButton";
 import { getRecentCollectionsForRecipe } from "@/app/lib/requests";
+import Image from "next/image";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -52,6 +53,7 @@ const RecipePage = async ({ params }: Props) => {
       text: step.text,
     })),
     tags: data.tags,
+    imagePath: data.imagePath,
   };
 
   const collections = await getRecentCollectionsForRecipe(slug);
@@ -113,7 +115,18 @@ const RecipePage = async ({ params }: Props) => {
           </div>
         </div>
       </div>
-
+      {recipe.imagePath && (
+        <div className="mt-6 overflow-hidden rounded-2xl border border-base-300 bg-base-200 p-2 shadow-sm sm:p-3">
+          <Image
+            src={`/api/v1/recipe/image/${recipe.imagePath}`}
+            alt={`${recipe.title} recipe`}
+            width={1200}
+            height={800}
+            className="mx-auto max-h-128 h-auto w-full rounded-xl object-contain"
+            unoptimized
+          />
+        </div>
+      )}
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className="card bg-base-200 shadow-sm lg:col-span-1">
           <div className="card-body">
