@@ -7,18 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-/**
- * after MVP TODO:
- * -User model
- * -tags (probably enums? or could it be added manually by users? probably bad idea but could be funny)
- * -images
- * -ratings
- * -comments
- * -categories
- * -pantry
- * -shopping lists (automatically based on pantry)
- */
-
 model Recipe {
   id              Int          @id @default(autoincrement())
   title           String
@@ -31,6 +19,7 @@ model Recipe {
   isFavorite      Boolean      @default(false)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+  imagePath       String?
   ingredients     Ingredient[]
   steps           Step[]
   collections     Collection[]

@@ -110,6 +110,7 @@ export interface Recipe {
   ingredients: Ingredient[];
   steps: Step[];
   tags: Tag[];
+  imagePath: string | null;
 }
 
 export interface RecipeCardProps {
