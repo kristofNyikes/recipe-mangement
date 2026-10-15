@@ -25,6 +25,7 @@ export const RecipeSchema = z.object({
   steps: z
     .array(
       z.object({
+        id: z.number().int().positive().optional(),
         stepNumber: z.number().int().positive(),
         text: z.string().trim().min(1),
       }),

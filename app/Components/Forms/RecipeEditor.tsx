@@ -43,6 +43,16 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [savedRecipeSlug, setSavedRecipeSlug] = useState<string | null>(null);
   const [removeExistingImage, setRemoveExistingImage] = useState(false);
+  const [selectedStepImages, setSelectedStepImages] = useState<
+    Record<string, File>
+  >({});
+  const [removeStepImages, setRemoveStepImages] = useState<Set<string>>(
+    new Set(),
+  );
+  const [stepImageError, setStepImageError] = useState<string | null>(null);
+  const [stepImagePreviews, setStepImagePreviews] = useState<
+    Record<string, string>
+  >({});
 
   const isEditing = Boolean(initialRecipe || savedRecipeSlug);
   const recipeSlug = slug ?? savedRecipeSlug ?? initialRecipe?.slug;
@@ -63,6 +73,20 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    const previews: Record<string, string> = {};
+
+    for (const [key, file] of Object.entries(selectedStepImages)) {
+      previews[key] = URL.createObjectURL(file);
+    }
+
+    setStepImagePreviews(previews);
+
+    return () => {
+      Object.values(previews).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [selectedStepImages]);
 
   useEffect(() => {
     if (!selectedImage) {
@@ -116,12 +140,46 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
     }));
   };
 
+  const getStepKey = (step: Step, index: number) =>
+    step.id !== undefined ? `id-${step.id}` : `new-${step.clientKey ?? index}`;
+
+  const selectStepImage = (key: string, file: File | null) => {
+    setSelectedStepImages((current) => {
+      const next = { ...current };
+
+      if (file) next[key] = file;
+      else delete next[key];
+
+      return next;
+    });
+
+    setRemoveStepImages((current) => {
+      const next = new Set(current);
+      next.delete(key);
+      return next;
+    });
+
+    setStepImageError(null);
+  };
+
+  const markStepImageForRemoval = (key: string) => {
+    setSelectedStepImages((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+
+    setRemoveStepImages((current) => new Set(current).add(key));
+    setStepImageError(null);
+  };
+
   const addStep = () => {
     setRecipe((current) => ({
       ...current,
       steps: [
         ...current.steps,
         {
+          clientKey: crypto.randomUUID(),
           text: "",
           stepNumber: current.steps.length + 1,
         },
@@ -213,6 +271,7 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
       steps: recipe.steps
         .filter((step) => step.text.trim() !== "")
         .map((step) => ({
+          ...(step.id !== undefined ? { id: step.id } : {}),
           stepNumber: step.stepNumber,
           text: step.text,
         })),
@@ -222,6 +281,7 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
 
     setIsSubmitting(true);
     setImageUploadError(null);
+    setStepImageError(null);
 
     try {
       const updating = Boolean(isEditing && recipeSlug);
@@ -255,7 +315,6 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
         return;
       }
 
-      // Remember the saved recipe, including if its image upload fails.
       setSavedRecipeSlug(savedRecipe.slug);
 
       if (selectedImage) {
@@ -309,6 +368,106 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
       }
 
       console.log(`Recipe ${updating ? "updated" : "created"}:`, savedRecipe);
+
+      setRecipe((current) => ({
+        ...current,
+        steps: current.steps.map((step) => {
+          const savedStep = savedRecipe.steps?.find(
+            (candidate) =>
+              (step.id !== undefined && candidate.id === step.id) ||
+              candidate.stepNumber === step.stepNumber,
+          );
+
+          return savedStep
+            ? { ...step, id: savedStep.id, imagePath: savedStep.imagePath }
+            : step;
+        }),
+      }));
+
+      for (const step of recipe.steps) {
+        const key = getStepKey(
+          step,
+          recipe.steps.findIndex((candidate) => candidate === step),
+        );
+
+        if (
+          step.id === undefined ||
+          !removeStepImages.has(key) ||
+          !step.imagePath
+        ) {
+          continue;
+        }
+
+        const imageResponse = await fetch(
+          `/api/v1/recipe/${savedRecipe.slug}/step/${step.id}/image`,
+          { method: "DELETE" },
+        );
+
+        const imageResult = await imageResponse.json();
+
+        if (!imageResponse.ok) {
+          setStepImageError(
+            imageResult.error ??
+              `Failed to remove image for step ${step.stepNumber}.`,
+          );
+          return;
+        }
+      }
+
+      for (const [key, file] of Object.entries(selectedStepImages)) {
+        const originalIndex = recipe.steps.findIndex(
+          (step, index) => getStepKey(step, index) === key,
+        );
+
+        if (originalIndex === -1) continue;
+
+        const originalStep = recipe.steps[originalIndex];
+
+        const savedStep = savedRecipe.steps?.find((candidate) =>
+          originalStep.id !== undefined
+            ? candidate.id === originalStep.id
+            : candidate.stepNumber === originalStep.stepNumber,
+        );
+
+        if (!savedStep?.id) {
+          setStepImageError(
+            `Recipe saved, but the ID for step ${originalStep.stepNumber} was missing. Please try saving again.`,
+          );
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const imageResponse = await fetch(
+          `/api/v1/recipe/${savedRecipe.slug}/step/${savedStep.id}/image`,
+          { method: "POST", body: formData },
+        );
+
+        const imageResult = await imageResponse.json();
+
+        if (!imageResponse.ok) {
+          setStepImageError(
+            imageResult.error ??
+              `Recipe saved, but the image for step ${originalStep.stepNumber} failed to upload.`,
+          );
+          return;
+        }
+        setRecipe((current) => ({
+          ...current,
+          steps: current.steps.map((step) =>
+            step.id === savedStep.id
+              ? {
+                  ...step,
+                  imagePath: imageResult.data.imagePath,
+                }
+              : step,
+          ),
+        }));
+      }
+
+      setSelectedStepImages({});
+      setRemoveStepImages(new Set());
 
       router.push(`/main/recipe/${savedRecipe.slug}`);
     } catch (error) {
@@ -632,31 +791,122 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
       <section className="mt-8">
         <h2 className="text-xl font-semibold">Instructions</h2>
 
-        {recipe.steps.map((step, index) => (
-          <div key={index} className="my-2 flex gap-3">
-            <input
-              type="text"
-              className="input"
-              placeholder="Instruction"
-              value={step.text}
-              disabled={isSubmitting}
-              onChange={(e) => updateStep(index, "text", e.target.value)}
-            />
+        {recipe.steps.map((step, index) => {
+          const key = getStepKey(step, index);
+          const preview = stepImagePreviews[key];
+          const hasSavedImage = Boolean(step.imagePath);
+          const imageMarkedForRemoval = removeStepImages.has(key);
 
-            <div className="badge badge-success badge-sm m-2 whitespace-nowrap font-bold">
-              Step {step.stepNumber}
-            </div>
-
-            <button
-              onClick={() => removeStep(index)}
-              className="btn btn-secondary"
-              type="button"
-              disabled={isSubmitting}
+          return (
+            <div
+              key={step.id ?? step.clientKey ?? index}
+              className="my-4 rounded-box border border-base-300 p-4"
             >
-              Remove
-            </button>
-          </div>
-        ))}
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="badge badge-success badge-sm whitespace-nowrap font-bold">
+                  Step {step.stepNumber}
+                </span>
+
+                <input
+                  type="text"
+                  className="input min-w-0 flex-1"
+                  placeholder="Instruction"
+                  value={step.text}
+                  disabled={isSubmitting}
+                  onChange={(e) => updateStep(index, "text", e.target.value)}
+                />
+
+                <button
+                  onClick={() => removeStep(index)}
+                  className="btn btn-secondary"
+                  type="button"
+                  disabled={isSubmitting}
+                >
+                  Remove step
+                </button>
+              </div>
+
+              <div className="mt-3">
+                <label className="label" htmlFor={`step-image-${key}`}>
+                  Step image (optional)
+                </label>
+
+                <input
+                  id={`step-image-${key}`}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="file-input w-full"
+                  disabled={isSubmitting}
+                  onChange={(e) => {
+                    selectStepImage(key, e.target.files?.[0] ?? null);
+                    e.currentTarget.value = "";
+                  }}
+                />
+
+                {preview && (
+                  <div className="mt-3">
+                    <img
+                      src={preview}
+                      alt={`Preview for step ${step.stepNumber}`}
+                      className="max-h-64 rounded-box object-contain"
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm mt-2"
+                      disabled={isSubmitting}
+                      onClick={() => selectStepImage(key, null)}
+                    >
+                      Cancel selected image
+                    </button>
+                  </div>
+                )}
+
+                {!preview && hasSavedImage && !imageMarkedForRemoval && (
+                  <div className="mt-3">
+                    <Image
+                      width={800}
+                      height={600}
+                      src={`/api/v1/recipe/step-image/${step.imagePath}`}
+                      alt={`Step ${step.stepNumber}`}
+                      className="h-auto max-h-64 w-auto max-w-full rounded-box object-contain"
+                      unoptimized
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btn-error btn-outline btn-sm mt-2"
+                      disabled={isSubmitting}
+                      onClick={() => markStepImageForRemoval(key)}
+                    >
+                      Remove current image
+                    </button>
+                  </div>
+                )}
+
+                {imageMarkedForRemoval && (
+                  <p className="mt-2 text-sm text-warning">
+                    Current image will be removed when you save.
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-xs ml-2"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        setRemoveStepImages((current) => {
+                          const next = new Set(current);
+                          next.delete(key);
+                          return next;
+                        });
+                      }}
+                    >
+                      Undo
+                    </button>
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
 
         <button
           className="btn btn-primary btn-soft mt-4"
@@ -667,6 +917,12 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
           + Add step
         </button>
       </section>
+
+      {stepImageError && (
+        <p role="alert" className="mt-3 text-error">
+          {stepImageError}
+        </p>
+      )}
 
       {/* Actions */}
 

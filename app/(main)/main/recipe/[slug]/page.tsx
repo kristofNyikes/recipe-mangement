@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Recipe } from "@/app/types";
+import { Recipe, Step } from "@/app/types";
 import FavoriteButton from "@/app/Components/Buttons/FavoriteButton";
 import DeleteRecipeButton from "@/app/Components/Buttons/DeleteRecipeButton";
 import { tagCapitalize } from "@/app/helpers/tagCapitalize";
@@ -48,9 +48,10 @@ const RecipePage = async ({ params }: Props) => {
       note: ingredient.note ?? undefined,
       stepNumber: ingredient.stepNumber ?? undefined,
     })),
-    steps: data.steps.map((step: any) => ({
+    steps: data.steps.map((step: Step) => ({
       stepNumber: step.stepNumber,
       text: step.text,
+      imagePath: step.imagePath,
     })),
     tags: data.tags,
     imagePath: data.imagePath,
@@ -168,11 +169,26 @@ const RecipePage = async ({ params }: Props) => {
                   key={step.stepNumber}
                   className="flex gap-4 border-b border-base-300 py-4 last:border-b-0"
                 >
-                  <div className="badge badge-primary badge-lg shrink-0 font-bold">
+                  <div className="badge badge-primary badge-lg h-fit shrink-0 font-bold">
                     {step.stepNumber}
                   </div>
 
-                  <p className="leading-relaxed">{step.text}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="leading-relaxed">{step.text}</p>
+
+                    {step.imagePath && (
+                      <div className="mt-3 overflow-hidden rounded-xl border border-base-300 bg-base-100 p-2">
+                        <Image
+                          src={`/api/v1/recipe/step-image/${step.imagePath}`}
+                          alt={`Step ${step.stepNumber}`}
+                          width={600}
+                          height={400}
+                          className="h-auto max-h-96 w-full rounded-lg object-contain"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

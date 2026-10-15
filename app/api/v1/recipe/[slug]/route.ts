@@ -70,7 +70,7 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
 
     const existingRecipe = await prisma.recipe.findUnique({
       where: { slug: slug },
-      select: { title: true },
+      select: { id: true, title: true },
     });
 
     if (!existingRecipe) {
@@ -91,14 +91,38 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
     const updatedSlug =
       existingRecipe.title !== title ? generateSLug(title) : slug;
 
+    const existingSteps = await prisma.step.findMany({
+      where: { recipeId: existingRecipe.id },
+      select: { id: true, imagePath: true },
+    });
+
+    const existingStepIds = new Set(existingSteps.map((step) => step.id));
+
+    if (
+      steps.some(
+        (step) => step.id !== undefined && !existingStepIds.has(step.id),
+      )
+    ) {
+      return NextResponse.json(
+        { error: "One or more steps do not belong to this recipe" },
+        { status: 400 },
+      );
+    }
+
+    const submittedStepIds = steps.flatMap((step) =>
+      step.id === undefined ? [] : [step.id],
+    );
+
+    const deletedStepImages = existingSteps
+      .filter((step) => !submittedStepIds.includes(step.id))
+      .map((step) => step.imagePath)
+      .filter((imagePath): imagePath is string => imagePath !== null);
+
     const updatedRecipe = await prisma.$transaction(async (tx) => {
-      const recipe = await tx.recipe.update({
-        where: {
-          slug: slug,
-        },
+      await tx.recipe.update({
+        where: { slug },
         data: {
           title,
-          //normalizedTitle is here because PostgreSQL case sensitive sorting annoyed me and this was easier
           normalizedTitle: title.toLowerCase(),
           slug: updatedSlug,
           description,
@@ -116,23 +140,80 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
               stepNumber: ingredient.stepNumber,
             })),
           },
-          steps: {
-            deleteMany: {},
-            create: steps.map((step) => ({
-              stepNumber: step.stepNumber,
-              text: step.text,
-            })),
-          },
           tags,
         },
+      });
 
-        include: {
-          ingredients: true,
-          steps: true,
+      await tx.step.deleteMany({
+        where: {
+          recipeId: existingRecipe.id,
+          ...(submittedStepIds.length > 0
+            ? { id: { notIn: submittedStepIds } }
+            : {}),
         },
       });
-      return recipe;
+
+      for (const step of steps) {
+        if (step.id !== undefined) {
+          await tx.step.update({
+            where: {
+              id: step.id,
+              recipeId: existingRecipe.id,
+            },
+            data: {
+              stepNumber: step.stepNumber,
+              text: step.text,
+            },
+          });
+        } else {
+          await tx.step.create({
+            data: {
+              recipeId: existingRecipe.id,
+              stepNumber: step.stepNumber,
+              text: step.text,
+            },
+          });
+        }
+      }
+
+      return tx.recipe.findUniqueOrThrow({
+        where: { id: existingRecipe.id },
+        include: {
+          ingredients: true,
+          steps: {
+            orderBy: { stepNumber: "asc" },
+          },
+        },
+      });
     });
+
+    for (const imagePath of deletedStepImages) {
+      if (!isRecipeImageFilename(imagePath)) {
+        console.warn(
+          "Skipping invalid deleted step image filename:",
+          imagePath,
+        );
+        continue;
+      }
+
+      try {
+        await unlink(getRecipeImagePath(imagePath));
+        console.log("Deleted image for removed step:", imagePath);
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "ENOENT"
+        ) {
+          continue;
+        }
+
+        console.error("Failed to delete image for removed step:", {
+          imagePath,
+          error,
+        });
+      }
+    }
 
     revalidatePath("/main");
 
@@ -150,28 +231,31 @@ export const DELETE = async (_: NextRequest, { params }: Params) => {
   const { slug } = await params;
 
   try {
-    // Find the recipe and remember its image filename.
     const recipe = await prisma.recipe.findUnique({
       where: { slug },
-      select: { imagePath: true },
+      select: {
+        imagePath: true,
+        steps: {
+          select: {
+            imagePath: true,
+          },
+        },
+      },
     });
 
     if (!recipe) {
       return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
     }
 
-    // Delete the database record first.
     await prisma.recipe.delete({
       where: { slug },
     });
 
-    // Clean up the associated image, if one exists.
     if (recipe.imagePath) {
       if (isRecipeImageFilename(recipe.imagePath)) {
         try {
           await unlink(getRecipeImagePath(recipe.imagePath));
         } catch (error) {
-          // A missing file is already cleaned up.
           if (
             !(error instanceof Error) ||
             !("code" in error) ||
@@ -185,6 +269,35 @@ export const DELETE = async (_: NextRequest, { params }: Params) => {
           "Recipe deleted, but its image filename was invalid:",
           recipe.imagePath,
         );
+      }
+    }
+
+    for (const step of recipe.steps) {
+      const imagePath = step.imagePath;
+
+      if (!imagePath) continue;
+
+      if (!isRecipeImageFilename(imagePath)) {
+        console.error(
+          "Recipe deleted, but a step image filename was invalid:",
+          imagePath,
+        );
+        continue;
+      }
+
+      try {
+        await unlink(getRecipeImagePath(imagePath));
+      } catch (error) {
+        if (
+          !(error instanceof Error) ||
+          !("code" in error) ||
+          error.code !== "ENOENT"
+        ) {
+          console.error("Recipe deleted, but step image cleanup failed:", {
+            imagePath,
+            error,
+          });
+        }
       }
     }
 

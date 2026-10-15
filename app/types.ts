@@ -85,8 +85,11 @@ export interface Ingredient {
 }
 
 export interface Step {
+  id?: number;
+  clientKey?: string;
   stepNumber: number;
   text: string;
+  imagePath?: string | null;
 }
 
 export interface RecipeSeed {

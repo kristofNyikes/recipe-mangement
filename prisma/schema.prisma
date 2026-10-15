@@ -40,11 +40,12 @@ model Ingredient {
 }
 
 model Step {
-  id         Int    @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
   recipeId   Int
-  recipe     Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipe     Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   stepNumber Int
   text       String
+  imagePath  String?
 
   @@index([recipeId])
 }

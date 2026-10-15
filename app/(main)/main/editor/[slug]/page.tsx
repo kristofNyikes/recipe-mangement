@@ -39,8 +39,10 @@ const EditRecipePage = async ({ params }: Props) => {
 
     steps: data.steps.map(
       (step: Step): Step => ({
+        id: step.id,
         stepNumber: step.stepNumber,
         text: step.text,
+        imagePath: step.imagePath,
       }),
     ),
     tags: data.tags,
