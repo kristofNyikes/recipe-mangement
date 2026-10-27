@@ -7,8 +7,24 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  recipes Recipe[]
+}
+
 model Recipe {
-  id              Int          @id @default(autoincrement())
+  id     Int     @id @default(autoincrement())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
   title           String
   normalizedTitle String
   slug            String       @unique
@@ -24,6 +40,8 @@ model Recipe {
   steps           Step[]
   collections     Collection[]
   tags            Tag[]
+
+  @@index([userId])
 }
 
 model Ingredient {
