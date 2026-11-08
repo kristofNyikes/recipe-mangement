@@ -8,10 +8,15 @@ import { getAllRecipes } from "@/app/lib/requests";
 import { RecipeSortBy, Tag, tags } from "@/app/types";
 import { revalidatePath } from "next/cache";
 import { parseTags } from "@/app/helpers/parseTags";
+import { auth } from "@/auth";
 
 // GET /api/v1/recipe?page=1&limit=10&sortBy=createdAt&sort=desc&summary=true
 export const GET = async (req: NextRequest) => {
-  // TODO: recipe belongs to a user
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
 
   const { searchParams } = req.nextUrl;
 
@@ -53,6 +58,7 @@ export const GET = async (req: NextRequest) => {
       sortOrder,
       summary,
       tags: selectedTags,
+      userId: session.user.id,
     });
 
     return NextResponse.json(recipes, { status: 200 });
@@ -68,6 +74,12 @@ export const GET = async (req: NextRequest) => {
 
 // POST /api/v1/recipe - Creates a recipe
 export const POST = async (req: NextRequest) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   const body = await req.json();
 
   const result = RecipeSchema.safeParse(body);
@@ -97,6 +109,7 @@ export const POST = async (req: NextRequest) => {
   try {
     const recipe = await prisma.recipe.create({
       data: {
+        user: { connect: { id: session.user.id } },
         title,
         //normalizedTitle is here because PostgreSQL case sensitive sorting annoyed me and this was easier
         normalizedTitle: title.toLowerCase(),

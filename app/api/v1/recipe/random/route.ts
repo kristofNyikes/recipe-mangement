@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getRandomRecipe } from "@/app/lib/requests";
 import { tags as validTags, Tag } from "@/app/types";
+import { auth } from "@/auth";
 
 export const GET = async (req: NextRequest) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const searchParams = req.nextUrl.searchParams;
 
@@ -45,6 +52,7 @@ export const GET = async (req: NextRequest) => {
     const recipe = await getRandomRecipe({
       tags: selectedTags as Tag[],
       matchMode,
+      userId: session.user.id,
     });
 
     if (!recipe) {

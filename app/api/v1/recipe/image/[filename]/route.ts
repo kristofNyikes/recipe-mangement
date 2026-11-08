@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { NextResponse } from "next/server";
-
+import { auth } from "@/auth";
 import prisma from "@/prisma/client";
 import {
   getRecipeImagePath,
@@ -20,6 +20,12 @@ const contentTypes: Record<string, string> = {
 };
 
 export async function GET(_request: Request, { params }: Params) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { filename } = await params;
 
@@ -30,7 +36,10 @@ export async function GET(_request: Request, { params }: Params) {
 
     // Only serve files currently associated with a recipe.
     const recipe = await prisma.recipe.findFirst({
-      where: { imagePath: filename },
+      where: {
+        imagePath: filename,
+        userId: session.user.id,
+      },
       select: { id: true },
     });
 
@@ -46,7 +55,7 @@ export async function GET(_request: Request, { params }: Params) {
       headers: {
         "Content-Type": contentTypes[extension],
         "Content-Length": String(image.length),
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
       },
     });

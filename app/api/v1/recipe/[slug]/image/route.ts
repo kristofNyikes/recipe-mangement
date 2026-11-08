@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
 
 import prisma from "@/prisma/client";
 import {
@@ -19,6 +20,12 @@ interface Params {
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest, { params }: Params) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let savedPath: string | undefined;
   let databaseUpdated = false;
 
@@ -26,7 +33,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     const { slug } = await params;
 
     const recipe = await prisma.recipe.findUnique({
-      where: { slug },
+      where: { slug, userId: session.user.id },
       select: { slug: true, imagePath: true },
     });
 
@@ -68,7 +75,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     await writeFile(savedPath, buffer, { flag: "wx" });
 
     const updatedRecipe = await prisma.recipe.update({
-      where: { slug },
+      where: { slug, userId: session.user.id },
       data: { imagePath: filename },
       select: { slug: true, imagePath: true },
     });
@@ -115,11 +122,17 @@ export async function POST(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { slug } = await params;
 
     const recipe = await prisma.recipe.findUnique({
-      where: { slug },
+      where: { slug, userId: session.user.id },
       select: { slug: true, imagePath: true },
     });
 
@@ -146,7 +159,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
 
     // Clear the database reference first.
     await prisma.recipe.update({
-      where: { slug },
+      where: { slug, userId: session.user.id },
       data: { imagePath: null },
     });
 

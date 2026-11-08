@@ -10,6 +10,7 @@ interface GetRecipesOptions {
   sortOrder: Prisma.SortOrder;
   summary: boolean;
   tags?: Tag[];
+  userId: string;
 }
 
 export const getAllRecipes = async ({
@@ -19,6 +20,7 @@ export const getAllRecipes = async ({
   sortOrder,
   summary,
   tags,
+  userId,
 }: GetRecipesOptions) => {
   const sortField = sortBy === "title" ? "normalizedTitle" : sortBy;
   const queryOptions = {
@@ -30,9 +32,10 @@ export const getAllRecipes = async ({
     },
   };
 
-  const where: Prisma.RecipeWhereInput = tags?.length
-    ? { tags: { hasSome: tags } }
-    : {};
+  const where: Prisma.RecipeWhereInput = {
+    userId,
+    ...(tags?.length ? { tags: { hasSome: tags } } : {}),
+  };
 
   const recipes = summary
     ? await prisma.recipe.findMany({
@@ -68,22 +71,20 @@ export const getAllRecipes = async ({
   };
 };
 
-export const getAllFavoriteRecipes = async () => {
+export const getAllFavoriteRecipes = async (userId: string) => {
   const recipes = await prisma.recipe.findMany({
-    orderBy: {
-      createdAt: "desc",
+    orderBy: { createdAt: "desc" },
+    where: {
+      isFavorite: true,
+      userId,
     },
-    where: { isFavorite: true },
-    include: {
-      ingredients: true,
-      steps: true,
-    },
+    include: { ingredients: true, steps: true },
   });
 
   return { data: recipes };
 };
 
-export const createCollection = async (name: string) => {
+export const createCollection = async (name: string, userId: string) => {
   const slug = generateSLug(name);
 
   return prisma.collection.create({
@@ -91,6 +92,7 @@ export const createCollection = async (name: string) => {
       name,
       normalizedName: name.toLowerCase(),
       slug,
+      userId,
     },
   });
 };
@@ -100,11 +102,13 @@ export const getAllCollections = async ({
   limit,
   sortBy,
   sortOrder,
+  userId,
 }: {
   page: number;
   limit: number;
   sortBy: CollectionSortBy;
   sortOrder: Prisma.SortOrder;
+  userId: string;
 }) => {
   const skip = (page - 1) * limit;
 
@@ -114,6 +118,7 @@ export const getAllCollections = async ({
     prisma.collection.findMany({
       skip,
       take: limit,
+      where: { userId },
       orderBy: {
         [orderByField]: sortOrder,
       },
@@ -135,7 +140,7 @@ export const getAllCollections = async ({
         },
       },
     }),
-    prisma.collection.count(),
+    prisma.collection.count({ where: { userId } }),
   ]);
 
   return {
@@ -150,11 +155,16 @@ export const getAllCollections = async ({
   };
 };
 
-export const updateCollection = async (slug: string, name: string) => {
+export const updateCollection = async (
+  slug: string,
+  name: string,
+  userId: string,
+) => {
   const newSlug = generateSLug(name);
   return prisma.collection.update({
     where: {
       slug,
+      userId,
     },
     data: {
       name,
@@ -164,30 +174,22 @@ export const updateCollection = async (slug: string, name: string) => {
   });
 };
 
-export const deleteCollection = async (slug: string) => {
+export const deleteCollection = async (slug: string, userId: string) => {
   return prisma.collection.delete({
     where: {
       slug,
+      userId,
     },
   });
 };
 
-export const getCollectionRecipes = async (slug: string) => {
+export const getCollectionRecipes = async (slug: string, userId: string) => {
   const collection = await prisma.collection.findUnique({
-    where: { slug },
+    where: { slug, userId },
     select: {
       name: true,
-      recipes: {
-        include: {
-          ingredients: true,
-          steps: true,
-        },
-      },
-      _count: {
-        select: {
-          recipes: true,
-        },
-      },
+      recipes: { include: { ingredients: true, steps: true } },
+      _count: { select: { recipes: true } },
     },
   });
 
@@ -209,15 +211,15 @@ export const getCollectionRecipes = async (slug: string) => {
 export const addRecipeToCollection = async (
   collectionSlug: string,
   recipeSlug: string,
+  userId: string,
 ) => {
   return prisma.collection.update({
-    where: {
-      slug: collectionSlug,
-    },
+    where: { slug: collectionSlug, userId },
     data: {
       recipes: {
         connect: {
           slug: recipeSlug,
+          userId,
         },
       },
       updatedAt: new Date(),
@@ -228,15 +230,15 @@ export const addRecipeToCollection = async (
 export const deleteRecipeFromCollection = async (
   collectionSlug: string,
   recipeSlug: string,
+  userId: string,
 ) => {
   return prisma.collection.update({
-    where: {
-      slug: collectionSlug,
-    },
+    where: { slug: collectionSlug, userId },
     data: {
       recipes: {
         disconnect: {
           slug: recipeSlug,
+          userId,
         },
       },
       updatedAt: new Date(),
@@ -244,8 +246,14 @@ export const deleteRecipeFromCollection = async (
   });
 };
 
-export const getRecentCollectionsForRecipe = async (recipeSlug: string) => {
+export const getRecentCollectionsForRecipe = async (
+  recipeSlug: string,
+  userId: string,
+) => {
   const collections = await prisma.collection.findMany({
+    where: {
+      userId,
+    },
     take: 10,
     orderBy: {
       updatedAt: "desc",
@@ -256,6 +264,7 @@ export const getRecentCollectionsForRecipe = async (recipeSlug: string) => {
       recipes: {
         where: {
           slug: recipeSlug,
+          userId,
         },
         select: {
           id: true,
@@ -274,41 +283,37 @@ export const getRecentCollectionsForRecipe = async (recipeSlug: string) => {
 export const getRandomRecipe = async ({
   tags = [],
   matchMode = "any",
+  userId,
 }: {
   tags?: Tag[];
   matchMode?: "any" | "all";
+  userId: string;
 }) => {
-  const where =
-    tags.length === 0
+  const where = {
+    userId,
+    ...(tags.length === 0
       ? {}
       : {
           tags: matchMode === "all" ? { hasEvery: tags } : { hasSome: tags },
-        };
+        }),
+  };
 
   const matchingRecipes = await prisma.recipe.findMany({
     where,
     select: { id: true },
   });
 
-  if (matchingRecipes.length === 0) {
-    return null;
-  }
+  if (matchingRecipes.length === 0) return null;
 
-  // Pick one matching recipe at random.
   const randomIndex = Math.floor(Math.random() * matchingRecipes.length);
   const selectedId = matchingRecipes[randomIndex].id;
 
   const recipe = await prisma.recipe.findUnique({
-    where: { id: selectedId },
-    include: {
-      ingredients: true,
-      steps: true,
-    },
+    where: { id: selectedId, userId },
+    include: { ingredients: true, steps: true },
   });
 
-  if (!recipe) {
-    return null;
-  }
+  if (!recipe) return null;
 
   return {
     ...recipe,

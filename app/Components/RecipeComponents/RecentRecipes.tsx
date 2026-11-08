@@ -2,14 +2,23 @@ import Link from "next/link";
 import RecipeCard from "./RecipeCard";
 import { Recipe } from "@/app/types";
 import { getAllRecipes } from "@/app/lib/requests";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 const RecentRecipes = async () => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+
   const result = await getAllRecipes({
     page: 1,
     limit: 3,
     sortBy: "createdAt",
     sortOrder: "desc",
     summary: true,
+    userId: session.user.id,
   });
 
   const recipes = result.data as Recipe[];

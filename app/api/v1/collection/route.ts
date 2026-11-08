@@ -3,8 +3,15 @@ import { createCollection, getAllCollections } from "@/app/lib/requests";
 import { createCollectionSchema } from "./schema";
 import { CollectionSortBy } from "@/app/types";
 import { Prisma } from "@/generated/prisma";
+import { auth } from "@/auth";
 
 export const POST = async (req: NextRequest) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
 
@@ -17,7 +24,10 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    const collection = await createCollection(result.data.name);
+    const collection = await createCollection(
+      result.data.name,
+      session.user.id,
+    );
 
     return NextResponse.json(collection, { status: 201 });
   } catch (error) {
@@ -29,6 +39,12 @@ export const POST = async (req: NextRequest) => {
 };
 
 export const GET = async (req: NextRequest) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   const { searchParams } = req.nextUrl;
 
   const requestedPage = Number(searchParams.get("page"));
@@ -61,6 +77,7 @@ export const GET = async (req: NextRequest) => {
       limit,
       sortBy,
       sortOrder,
+      userId: session.user.id,
     });
 
     return NextResponse.json(collections, { status: 200 });

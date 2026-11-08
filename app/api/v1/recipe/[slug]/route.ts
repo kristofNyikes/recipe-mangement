@@ -10,17 +10,24 @@ import {
   getRecipeImagePath,
   isRecipeImageFilename,
 } from "@/app/lib/recipeImages";
+import { auth } from "@/auth";
 
 interface Params {
   params: Promise<{ slug: string }>;
 }
 
 export const GET = async (req: NextRequest, { params }: Params) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   try {
     const { slug } = await params;
 
     const recipe = await prisma.recipe.findUnique({
-      where: { slug },
+      where: { slug, userId: session.user.id },
       include: {
         ingredients: {
           orderBy: { name: "asc" },
@@ -55,6 +62,11 @@ export const GET = async (req: NextRequest, { params }: Params) => {
 };
 
 export const PUT = async (req: NextRequest, { params }: Params) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
   try {
     const { slug } = await params;
     const body = await req.json();
@@ -69,7 +81,7 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
     }
 
     const existingRecipe = await prisma.recipe.findUnique({
-      where: { slug: slug },
+      where: { slug: slug, userId: session.user.id },
       select: { id: true, title: true },
     });
 
@@ -120,7 +132,7 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
 
     const updatedRecipe = await prisma.$transaction(async (tx) => {
       await tx.recipe.update({
-        where: { slug },
+        where: { slug, userId: session.user.id },
         data: {
           title,
           normalizedTitle: title.toLowerCase(),
@@ -228,11 +240,17 @@ export const PUT = async (req: NextRequest, { params }: Params) => {
 };
 
 export const DELETE = async (_: NextRequest, { params }: Params) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   const { slug } = await params;
 
   try {
     const recipe = await prisma.recipe.findUnique({
-      where: { slug },
+      where: { slug, userId: session.user.id },
       select: {
         imagePath: true,
         steps: {
@@ -248,7 +266,7 @@ export const DELETE = async (_: NextRequest, { params }: Params) => {
     }
 
     await prisma.recipe.delete({
-      where: { slug },
+      where: { slug, userId: session.user.id },
     });
 
     if (recipe.imagePath) {

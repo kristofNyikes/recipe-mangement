@@ -2,13 +2,22 @@ import CollectionListCard from "@/app/Components/CollectionComponents/Collection
 import CreateCollectionButton from "@/app/Components/Buttons/CreateCollection";
 
 import { getAllCollections } from "@/app/lib/requests";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 const CollectionsPage = async () => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+
   const result = await getAllCollections({
     page: 1,
     limit: 10,
     sortBy: "updatedAt",
     sortOrder: "desc",
+    userId: session.user.id,
   });
 
   return (

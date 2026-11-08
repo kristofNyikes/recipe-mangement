@@ -4,6 +4,8 @@ import RecipeCardExtended from "@/app/Components/RecipeComponents/RecipeCardExte
 import { parseTags } from "@/app/helpers/parseTags";
 import { getAllRecipes } from "@/app/lib/requests";
 import { Recipe, Tag, tags } from "@/app/types";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 interface AllRecipesProps {
   searchParams: Promise<{
@@ -14,6 +16,11 @@ interface AllRecipesProps {
 }
 
 const AllRecipes = async ({ searchParams }: AllRecipesProps) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
   const params = await searchParams;
 
   const sortBy =
@@ -37,6 +44,7 @@ const AllRecipes = async ({ searchParams }: AllRecipesProps) => {
     sortOrder,
     summary: false,
     tags: selectedTags,
+    userId: session.user.id,
   });
 
   const recipes = result.data as Recipe[];

@@ -5,15 +5,21 @@ import {
   deleteRecipeFromCollection,
   getCollectionRecipes,
 } from "@/app/lib/requests";
+import { auth } from "@/auth";
 
 interface RouteParams {
   params: Promise<{ slug: string }>;
 }
 
 export const GET = async (_req: NextRequest, { params }: RouteParams) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
   try {
     const { slug } = await params;
-    const recipes = await getCollectionRecipes(slug);
+    const recipes = await getCollectionRecipes(slug, session.user.id);
 
     if (recipes === null) {
       return NextResponse.json(
@@ -34,6 +40,12 @@ export const GET = async (_req: NextRequest, { params }: RouteParams) => {
 };
 
 export const POST = async (req: NextRequest, { params }: RouteParams) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   try {
     const { slug } = await params;
     const body = await req.json();
@@ -50,6 +62,7 @@ export const POST = async (req: NextRequest, { params }: RouteParams) => {
     const collection = await addRecipeToCollection(
       slug,
       result.data.recipeSlug,
+      session.user.id,
     );
 
     return NextResponse.json(collection, { status: 200 });
@@ -62,6 +75,12 @@ export const POST = async (req: NextRequest, { params }: RouteParams) => {
 };
 
 export const DELETE = async (req: NextRequest, { params }: RouteParams) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   try {
     const { slug } = await params;
     const body = await req.json();
@@ -78,6 +97,7 @@ export const DELETE = async (req: NextRequest, { params }: RouteParams) => {
     const collection = await deleteRecipeFromCollection(
       slug,
       result.data.recipeSlug,
+      session.user.id,
     );
 
     return NextResponse.json(collection, { status: 200 });

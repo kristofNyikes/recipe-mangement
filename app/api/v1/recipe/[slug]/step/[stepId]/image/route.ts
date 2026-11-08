@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
 
 import prisma from "@/prisma/client";
 import {
@@ -19,6 +20,12 @@ interface Params {
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest, { params }: Params) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let savedPath: string | undefined;
   let databaseUpdated = false;
 
@@ -33,7 +40,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     const step = await prisma.step.findFirst({
       where: {
         id: stepId,
-        recipe: { slug },
+        recipe: {
+          slug,
+          userId: session.user.id,
+        },
       },
       select: {
         id: true,
@@ -82,10 +92,19 @@ export async function POST(request: NextRequest, { params }: Params) {
     await mkdir(RECIPE_IMAGE_DIR, { recursive: true });
     await writeFile(savedPath, buffer, { flag: "wx" });
 
-    await prisma.step.update({
-      where: { id: step.id },
+    const result = await prisma.step.updateMany({
+      where: {
+        id: step.id,
+        recipe: {
+          is: { userId: session.user.id },
+        },
+      },
       data: { imagePath: filename },
     });
+
+    if (result.count === 0) {
+      throw new Error("Recipe step ownership check failed");
+    }
 
     databaseUpdated = true;
 
@@ -132,6 +151,12 @@ export async function POST(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { slug, stepId: rawStepId } = await params;
     const stepId = Number(rawStepId);
@@ -143,7 +168,10 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     const step = await prisma.step.findFirst({
       where: {
         id: stepId,
-        recipe: { slug },
+        recipe: {
+          slug,
+          userId: session.user.id,
+        },
       },
       select: { id: true, imagePath: true },
     });
@@ -171,10 +199,22 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       );
     }
 
-    await prisma.step.update({
-      where: { id: step.id },
+    const result = await prisma.step.updateMany({
+      where: {
+        id: step.id,
+        recipe: {
+          is: { userId: session.user.id },
+        },
+      },
       data: { imagePath: null },
     });
+
+    if (result.count === 0) {
+      return NextResponse.json(
+        { error: "Recipe step not found" },
+        { status: 404 },
+      );
+    }
 
     try {
       await unlink(getRecipeImagePath(step.imagePath));

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Recipe, Step } from "@/app/types";
 import FavoriteButton from "@/app/Components/Buttons/FavoriteButton";
 import DeleteRecipeButton from "@/app/Components/Buttons/DeleteRecipeButton";
@@ -7,12 +7,19 @@ import { tagCapitalize } from "@/app/helpers/tagCapitalize";
 import SaveToCollectionButton from "@/app/Components/Buttons/SaveToCollectionButton";
 import { getRecentCollectionsForRecipe } from "@/app/lib/requests";
 import Image from "next/image";
+import { auth } from "@/auth";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
 const RecipePage = async ({ params }: Props) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+
   const { slug } = await params;
 
   const response = await fetch(
@@ -57,7 +64,10 @@ const RecipePage = async ({ params }: Props) => {
     imagePath: data.imagePath,
   };
 
-  const collections = await getRecentCollectionsForRecipe(slug);
+  const collections = await getRecentCollectionsForRecipe(
+    slug,
+    session.user.id,
+  );
 
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6">

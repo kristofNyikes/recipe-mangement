@@ -1,11 +1,13 @@
 import Link from "next/link";
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import CollectionRecipeList from "@/app/Components/CollectionComponents/CollectionRecipeList";
 
 import { getCollectionRecipes } from "@/app/lib/requests";
 import CollectionActions from "@/app/Components/CollectionComponents/CollectionActions";
+
+import { auth } from "@/auth";
 
 interface CollectionPageProps {
   params: Promise<{
@@ -14,10 +16,16 @@ interface CollectionPageProps {
 }
 
 const CollectionPage = async ({ params }: CollectionPageProps) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+
   try {
     const { slug } = await params;
 
-    const collection = await getCollectionRecipes(slug);
+    const collection = await getCollectionRecipes(slug, session.user.id);
 
     if (!collection) {
       notFound();

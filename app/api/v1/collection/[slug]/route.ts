@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UpdateCollectionSchema } from "./schema";
 import { deleteCollection, updateCollection } from "@/app/lib/requests";
+import { auth } from "@/auth";
 interface RouteParams {
   params: Promise<{ slug: string }>;
 }
 
 export const PUT = async (req: NextRequest, { params }: RouteParams) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   const { slug } = await params;
 
   try {
@@ -20,7 +27,11 @@ export const PUT = async (req: NextRequest, { params }: RouteParams) => {
       );
     }
 
-    const collection = await updateCollection(slug, result.data.name);
+    const collection = await updateCollection(
+      slug,
+      result.data.name,
+      session.user.id,
+    );
 
     return NextResponse.json(collection, { status: 200 });
   } catch (error) {
@@ -32,10 +43,15 @@ export const PUT = async (req: NextRequest, { params }: RouteParams) => {
 };
 
 export const DELETE = async (req: NextRequest, { params }: RouteParams) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
   const { slug } = await params;
 
   try {
-    await deleteCollection(slug);
+    await deleteCollection(slug, session.user.id);
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

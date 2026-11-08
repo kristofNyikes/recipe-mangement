@@ -1,13 +1,21 @@
 import CollectionCard from "@/app/Components/CollectionComponents/CollectionCard";
 import { getAllCollections } from "@/app/lib/requests";
+import { auth } from "@/auth";
 import Link from "next/link";
 
 const Collections = async () => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
   const result = await getAllCollections({
     page: 1,
     limit: 3,
     sortBy: "updatedAt",
     sortOrder: "desc",
+    userId: session.user.id,
   });
 
   const collections = result.collections;
