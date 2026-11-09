@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LogoutButton from "../Buttons/LogoutButton";
 
 const Navbar = () => {
   return (
@@ -57,9 +58,7 @@ const Navbar = () => {
               </Link>
             </li>
             <li>
-              <Link href={"/"} className="btn btn-soft btn-primary my-2.5">
-                Log out
-              </Link>
+              <LogoutButton className="btn btn-soft btn-primary my-2.5" />
             </li>
           </ul>
         </div>
@@ -109,9 +108,7 @@ const Navbar = () => {
             </Link>
           </li>
           <li>
-            <Link href={"/"} className="btn btn-soft btn-primary">
-              Log out
-            </Link>
+            <LogoutButton className="btn btn-soft btn-primary" />
           </li>
         </ul>
       </div>

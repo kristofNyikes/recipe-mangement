@@ -8,6 +8,7 @@ import SaveToCollectionButton from "@/app/Components/Buttons/SaveToCollectionBut
 import { getRecentCollectionsForRecipe } from "@/app/lib/requests";
 import Image from "next/image";
 import { auth } from "@/auth";
+import { cookies } from "next/headers";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -22,10 +23,20 @@ const RecipePage = async ({ params }: Props) => {
 
   const { slug } = await params;
 
+  const cookieStore = await cookies();
+
+  const cookieHeader = cookieStore
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
+
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/recipe/${slug}`,
     {
       cache: "no-store",
+      headers: {
+        Cookie: cookieHeader,
+      },
     },
   );
 

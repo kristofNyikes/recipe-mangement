@@ -1,16 +1,40 @@
 import RecipeEditor from "@/app/Components/Forms/RecipeEditor";
 import { Ingredient, Recipe, Step } from "@/app/types";
+import { auth } from "@/auth";
+import { cookies } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
 const EditRecipePage = async ({ params }: Props) => {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
+
   const { slug } = await params;
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/recipe/${slug}`,
+    {
+      cache: "no-store",
+      headers: {
+        Cookie: cookieHeader,
+      },
+    },
   );
+
+  if (response.status === 404) {
+    notFound();
+  }
 
   if (!response.ok) {
     throw new Error("Failed to fetch recipe");

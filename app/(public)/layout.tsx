@@ -1,7 +1,16 @@
+import React from "react";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import NextTopLoader from "nextjs-toploader";
 import Navbar from "../Components/Navbar/BeforeAuthNavbar";
 
-const PublicLayout = ({ children }: { children: React.ReactNode }) => {
+const PublicLayout = async ({ children }: { children: React.ReactNode }) => {
+  const session = await auth();
+
+  if (session?.user) {
+    redirect("/main");
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
