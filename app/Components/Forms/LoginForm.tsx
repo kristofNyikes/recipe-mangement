@@ -33,7 +33,7 @@ const LoginForm = () => {
         return;
       }
 
-      router.push(result.url ?? "/main");
+      router.push("/main");
       router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");

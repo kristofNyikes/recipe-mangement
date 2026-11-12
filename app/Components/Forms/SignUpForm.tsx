@@ -70,7 +70,7 @@ const SignUpForm = () => {
         return;
       }
 
-      router.push(loginResult.url ?? "/main");
+      router.push("/main");
       router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");

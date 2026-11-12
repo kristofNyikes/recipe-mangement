@@ -367,8 +367,6 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
         setRemoveExistingImage(false);
       }
 
-      console.log(`Recipe ${updating ? "updated" : "created"}:`, savedRecipe);
-
       setRecipe((current) => ({
         ...current,
         steps: current.steps.map((step) => {
