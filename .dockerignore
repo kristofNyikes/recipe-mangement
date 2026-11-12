@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.github
+
+.env
+.env.*
+!.env.example
+
+generated/prisma
+
+recipe-uploads
+
+npm-debug.log*
+.DS_Store
