@@ -13,9 +13,15 @@ interface CollectionPageProps {
   params: Promise<{
     slug: string;
   }>;
+  searchParams: Promise<{
+    page?: string;
+  }>;
 }
 
-const CollectionPage = async ({ params }: CollectionPageProps) => {
+const CollectionPage = async ({
+  params,
+  searchParams,
+}: CollectionPageProps) => {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -24,8 +30,18 @@ const CollectionPage = async ({ params }: CollectionPageProps) => {
 
   try {
     const { slug } = await params;
+    const query = await searchParams;
 
-    const collection = await getCollectionRecipes(slug, session.user.id);
+    const requestedPage = Number(query.page);
+    const page =
+      Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+
+    const collection = await getCollectionRecipes(
+      slug,
+      session.user.id,
+      page,
+      10,
+    );
 
     if (!collection) {
       notFound();
@@ -52,6 +68,8 @@ const CollectionPage = async ({ params }: CollectionPageProps) => {
         <CollectionRecipeList
           collectionSlug={slug}
           recipes={collection.recipes}
+          currentPage={collection.pagination.page}
+          totalPages={collection.pagination.totalPages}
         />
 
         <CollectionActions slug={slug} name={collection.name} />

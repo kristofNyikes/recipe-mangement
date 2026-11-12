@@ -71,17 +71,37 @@ export const getAllRecipes = async ({
   };
 };
 
-export const getAllFavoriteRecipes = async (userId: string) => {
+export const getAllFavoriteRecipes = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 10,
+) => {
+  const where = {
+    isFavorite: true,
+    userId,
+  };
+
+  const total = await prisma.recipe.count({ where });
+  const totalPages = Math.ceil(total / limit);
+  const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1;
+
   const recipes = await prisma.recipe.findMany({
+    where,
     orderBy: { createdAt: "desc" },
-    where: {
-      isFavorite: true,
-      userId,
-    },
+    skip: (currentPage - 1) * limit,
+    take: limit,
     include: { ingredients: true, steps: true },
   });
 
-  return { data: recipes };
+  return {
+    data: recipes,
+    pagination: {
+      page: currentPage,
+      limit,
+      total,
+      totalPages,
+    },
+  };
 };
 
 export const createCollection = async (name: string, userId: string) => {
@@ -183,7 +203,12 @@ export const deleteCollection = async (slug: string, userId: string) => {
   });
 };
 
-export const getCollectionRecipes = async (slug: string, userId: string) => {
+export const getCollectionRecipes = async (
+  slug: string,
+  userId: string,
+  page: number = 1,
+  limit: number = 10,
+) => {
   const collection = await prisma.collection.findUnique({
     where: { slug, userId },
     select: {
@@ -195,19 +220,43 @@ export const getCollectionRecipes = async (slug: string, userId: string) => {
 
   if (!collection) return null;
 
+  const total = collection._count.recipes;
+  const totalPages = Math.ceil(total / limit);
+  const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1;
+
+  const collectionWithRecipes = await prisma.collection.findUnique({
+    where: { slug, userId },
+    select: {
+      recipes: {
+        orderBy: { createdAt: "desc" },
+        skip: (currentPage - 1) * limit,
+        take: limit,
+        include: {
+          ingredients: true,
+          steps: true,
+        },
+      },
+    },
+  });
+
   return {
     name: collection.name,
-    recipes: collection.recipes.map((recipe) => ({
+    recipes: (collectionWithRecipes?.recipes ?? []).map((recipe) => ({
       ...recipe,
       ingredients: recipe.ingredients.map((ingredient) => ({
         ...ingredient,
         amount: ingredient.amount?.toNumber() ?? null,
       })),
     })),
-    recipeCount: collection._count.recipes,
+    recipeCount: total,
+    pagination: {
+      page: currentPage,
+      limit,
+      total,
+      totalPages,
+    },
   };
 };
-
 export const addRecipeToCollection = async (
   collectionSlug: string,
   recipeSlug: string,
