@@ -12,9 +12,14 @@ const TagCheckbox = () => {
   const searchParams = useSearchParams();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [tagSearch, setTagSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const selectedTags = parseTags(searchParams.get("tags") ?? "");
+
+  const filteredTags = tags.filter((tag) =>
+    tagCapitalize(tag).toLowerCase().includes(tagSearch.toLowerCase()),
+  );
 
   const handleTagChange = (tag: Tag, checked: boolean) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -61,24 +66,40 @@ const TagCheckbox = () => {
       </button>
 
       {isOpen && (
-        <ul className="menu absolute z-10 mt-1 max-h-96 w-52 flex-nowrap overflow-y-auto rounded-box bg-base-100 p-2 shadow-sm">
-          {tags.map((tag) => (
-            <li key={tag}>
-              <label htmlFor={`tag-${tag}`}>
-                <input
-                  id={`tag-${tag}`}
-                  type="checkbox"
-                  checked={selectedTags.includes(tag)}
-                  onChange={(event) =>
-                    handleTagChange(tag, event.target.checked)
-                  }
-                  className="checkbox"
-                />
-                {tagCapitalize(tag)}
-              </label>
-            </li>
-          ))}
-        </ul>
+        <div className="absolute z-10 mt-1 w-52 rounded-box bg-base-100 p-2 shadow-sm">
+          <input
+            type="text"
+            className="input input-sm w-full"
+            placeholder="Search tags..."
+            value={tagSearch}
+            onChange={(e) => setTagSearch(e.target.value)}
+          />
+
+          <ul className="menu mt-2 max-h-72 flex-nowrap overflow-y-auto p-0">
+            {filteredTags.length > 0 ? (
+              filteredTags.map((tag) => (
+                <li key={tag}>
+                  <label htmlFor={`tag-${tag}`}>
+                    <input
+                      id={`tag-${tag}`}
+                      type="checkbox"
+                      checked={selectedTags.includes(tag)}
+                      onChange={(event) =>
+                        handleTagChange(tag, event.target.checked)
+                      }
+                      className="checkbox"
+                    />
+                    {tagCapitalize(tag)}
+                  </label>
+                </li>
+              ))
+            ) : (
+              <li className="pointer-events-none">
+                <span className="text-sm opacity-60">No matching tags</span>
+              </li>
+            )}
+          </ul>
+        </div>
       )}
     </div>
   );

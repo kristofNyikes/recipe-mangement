@@ -8,11 +8,13 @@ const RecipeFilters = () => {
 
   const setSort = (sortBy: string, sortOrder: string) => {
     const params = new URLSearchParams(searchParams.toString());
+
     params.set("sortBy", sortBy);
     params.set("sortOrder", sortOrder);
+    params.set("page", "1");
+
     router.push(`?${params.toString()}`);
   };
-
   const isActive = (sortBy: string, sortOrder: string) =>
     currentSortBy === sortBy && currentSortOrder === sortOrder;
 

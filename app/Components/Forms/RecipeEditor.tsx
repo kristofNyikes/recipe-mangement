@@ -57,6 +57,8 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
   const isEditing = Boolean(initialRecipe || savedRecipeSlug);
   const recipeSlug = slug ?? savedRecipeSlug ?? initialRecipe?.slug;
 
+  const [tagSearch, setTagSearch] = useState("");
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -99,6 +101,10 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
 
     return () => URL.revokeObjectURL(previewUrl);
   }, [selectedImage]);
+
+  const filteredTags = availableTags.filter((tag) =>
+    tagCapitalize(tag).toLowerCase().includes(tagSearch.toLowerCase()),
+  );
 
   const addIngredient = () => {
     setRecipe((current) => ({
@@ -670,19 +676,38 @@ const RecipeEditor = ({ initialRecipe, slug }: RecipeEditorProps) => {
             </button>
 
             {isTagMenuOpen && (
-              <ul className="menu absolute z-10 mt-1 max-h-96 w-52 flex-nowrap overflow-y-auto rounded-box bg-base-100 p-2 shadow-sm">
-                {availableTags.map((tag) => (
-                  <li key={tag}>
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => handleAddTag(tag)}
-                    >
-                      {tagCapitalize(tag)}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <div className="absolute z-10 mt-1 w-52 rounded-box bg-base-100 p-2 shadow-sm">
+                <input
+                  type="text"
+                  className="input input-sm w-full"
+                  placeholder="Search tags..."
+                  value={tagSearch}
+                  disabled={isSubmitting}
+                  onChange={(e) => setTagSearch(e.target.value)}
+                />
+
+                <ul className="menu mt-2 max-h-72 flex-nowrap overflow-y-auto p-0">
+                  {filteredTags.length > 0 ? (
+                    filteredTags.map((tag) => (
+                      <li key={tag}>
+                        <button
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => handleAddTag(tag)}
+                        >
+                          {tagCapitalize(tag)}
+                        </button>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="pointer-events-none">
+                      <span className="text-sm opacity-60">
+                        No matching tags
+                      </span>
+                    </li>
+                  )}
+                </ul>
+              </div>
             )}
           </div>
         )}

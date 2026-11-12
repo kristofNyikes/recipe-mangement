@@ -16,6 +16,12 @@ const RandomRecipePicker = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [tagSearch, setTagSearch] = useState("");
+
+  const filteredTags = tags.filter((tag) =>
+    tagCapitalize(tag).toLowerCase().includes(tagSearch.toLowerCase()),
+  );
+
   const fetchRandomRecipe = useCallback(
     async (filters: Tag[], mode: MatchMode) => {
       setIsLoading(true);
@@ -95,21 +101,37 @@ const RandomRecipePicker = () => {
             Leave all tags unselected to include every recipe.
           </p>
 
-          <div className="grid max-h-64 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-base-300 p-2 sm:grid-cols-3">
-            {tags.map((tag) => (
-              <label
-                key={tag}
-                className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-base-300"
-              >
-                <input
-                  type="checkbox"
-                  className="checkbox checkbox-primary checkbox-sm"
-                  checked={selectedTags.includes(tag)}
-                  onChange={() => toggleTag(tag)}
-                />
-                <span className="text-sm">{tagCapitalize(tag)}</span>
-              </label>
-            ))}
+          <div className="space-y-2">
+            <input
+              type="text"
+              className="input input-sm w-full"
+              placeholder="Search tags..."
+              value={tagSearch}
+              onChange={(e) => setTagSearch(e.target.value)}
+            />
+
+            <div className="grid max-h-64 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-base-300 p-2 sm:grid-cols-3">
+              {filteredTags.length > 0 ? (
+                filteredTags.map((tag) => (
+                  <label
+                    key={tag}
+                    className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-base-300"
+                  >
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-primary checkbox-sm"
+                      checked={selectedTags.includes(tag)}
+                      onChange={() => toggleTag(tag)}
+                    />
+                    <span className="text-sm">{tagCapitalize(tag)}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="col-span-full p-2 text-sm text-base-content/60">
+                  No matching tags.
+                </p>
+              )}
+            </div>
           </div>
 
           <fieldset>
